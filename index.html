@@ -78,6 +78,52 @@
     </div>
   </div>
 
+  <section id="program-finder">
+    <span class="section-label">QUICK FINDER</span>
+    <h2>우리 아이 프로그램 찾기<small>현재 학년·연간 예산·자기관리 수준으로 1차 후보를 좁혀보세요</small></h2>
+    <form class="finder" id="finder-form">
+      <div class="finder-grid">
+        <label class="finder-field" for="finder-grade">
+          <span class="finder-step">1</span>
+          <span class="finder-label">현재 학년</span>
+          <select id="finder-grade" name="grade" required>
+            <option value="">학년 선택</option>
+            <option value="5">Grade 5</option>
+            <option value="6">Grade 6</option>
+            <option value="7">Grade 7</option>
+            <option value="8">Grade 8</option>
+            <option value="9">Grade 9</option>
+            <option value="10">Grade 10</option>
+            <option value="11">Grade 11</option>
+          </select>
+        </label>
+        <label class="finder-field" for="finder-budget">
+          <span class="finder-step">2</span>
+          <span class="finder-label">연간 예산</span>
+          <select id="finder-budget" name="budget" required>
+            <option value="">예산 선택</option>
+            <option value="45000">CA$45,000 이하</option>
+            <option value="60000">CA$45,001~60,000</option>
+            <option value="110000">CA$60,001 이상</option>
+          </select>
+        </label>
+        <label class="finder-field" for="finder-independence">
+          <span class="finder-step">3</span>
+          <span class="finder-label">자기관리 수준</span>
+          <select id="finder-independence" name="independence" required>
+            <option value="">수준 선택</option>
+            <option value="3">매일 생활·학습 관리 필요</option>
+            <option value="2">일부 도움 필요</option>
+            <option value="1">스스로 학습 가능</option>
+          </select>
+        </label>
+      </div>
+      <button class="finder-submit" type="submit">맞는 프로그램 확인하기</button>
+      <p class="finder-help">골프·IB·특정 지역 등 별도 목표가 있다면 결과와 함께 상담 시 알려주세요.</p>
+    </form>
+    <div class="finder-result" id="finder-result" aria-live="polite" hidden></div>
+  </section>
+
   <section>
     <span class="section-label">STEP 1</span>
     <h2>먼저, 관리형 vs 가디언형<small>이 선택이 비용의 절반을 결정합니다</small></h2>
