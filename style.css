@@ -584,3 +584,14 @@ footer .disclaimer{
 }
 footer .disclaimer a{color:inherit; text-decoration:underline; text-underline-offset:2px;}
 @media (max-width:480px){ footer{margin:24px 18px 0;} }
+
+
+/* GEO/AEO freshness marker */
+.info-updated{
+  position:relative; z-index:1;
+  display:inline-block; margin:0 0 12px; padding:4px 9px;
+  border:1px solid rgba(255,255,255,.20); border-radius:999px;
+  background:rgba(255,255,255,.07); color:#C9D2DF;
+  font-size:10px; line-height:1.4; letter-spacing:.01em;
+}
+@media (max-width:480px){.info-updated{font-size:9.5px; margin-bottom:10px;}}
