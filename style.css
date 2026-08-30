@@ -595,3 +595,11 @@ footer .disclaimer a{color:inherit; text-decoration:underline; text-underline-of
   font-size:10px; line-height:1.4; letter-spacing:.01em;
 }
 @media (max-width:480px){.info-updated{font-size:9.5px; margin-bottom:10px;}}
+
+
+/* Mobile hero tag text contrast fix */
+.hero-tags span,
+.hero-tags span *{
+  color:#EDEFF3 !important;
+  -webkit-text-fill-color:#EDEFF3 !important;
+}
