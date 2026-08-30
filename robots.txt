@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://edusmart-2.netlify.app/sitemap.xml
+Sitemap: https://edusmart-ca.netlify.app/sitemap.xml
