@@ -1,0 +1,80 @@
+name: One-time Edusmart external image localizer
+
+on:
+  push:
+    branches:
+      - audit-content-seo-2026-08-29
+    paths:
+      - .github/workflows/localize-framer-images.yml
+
+permissions:
+  contents: write
+
+jobs:
+  localize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: audit-content-seo-2026-08-29
+          fetch-depth: 0
+
+      - name: Download Framer images into repository and rewrite HTML
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+          from urllib.parse import urlparse
+          import hashlib
+          import re
+
+          image_dir = Path('images')
+          image_dir.mkdir(exist_ok=True)
+          cache = {}
+
+          def extension_for(url, content_type):
+              path = urlparse(url).path.lower()
+              for ext in ('.jpg', '.jpeg', '.png', '.webp', '.gif'):
+                  if path.endswith(ext):
+                      return '.jpg' if ext == '.jpeg' else ext
+              if 'png' in content_type:
+                  return '.png'
+              if 'webp' in content_type:
+                  return '.webp'
+              if 'gif' in content_type:
+                  return '.gif'
+              return '.jpg'
+
+          def localize(url):
+              if url in cache:
+                  return cache[url]
+              req = Request(url, headers={'User-Agent':'Mozilla/5.0'})
+              with urlopen(req, timeout=30) as r:
+                  data = r.read()
+                  ctype = (r.headers.get('Content-Type') or '').lower()
+              digest = hashlib.sha1(url.encode('utf-8')).hexdigest()[:12]
+              ext = extension_for(url, ctype)
+              filename = f'edusmart-{digest}{ext}'
+              target = image_dir / filename
+              target.write_bytes(data)
+              cache[url] = f'images/{filename}'
+              return cache[url]
+
+          pattern = re.compile(r'src="(https://framerusercontent\.com/[^\"]+)"')
+          for html in Path('.').glob('*.html'):
+              text = html.read_text(encoding='utf-8')
+              urls = pattern.findall(text)
+              for url in urls:
+                  local = localize(url)
+                  text = text.replace(f'src="{url}"', f'src="{local}"')
+              html.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Remove one-time workflow and commit
+        run: |
+          rm -f .github/workflows/localize-framer-images.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Localize Edusmart programme images"
+          git push origin HEAD:audit-content-seo-2026-08-29
