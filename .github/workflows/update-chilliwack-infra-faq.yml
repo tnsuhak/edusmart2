@@ -1,0 +1,43 @@
+name: One-time Chilliwack Korean infrastructure FAQ update
+
+on:
+  push:
+    branches:
+      - audit-content-seo-2026-08-29
+    paths:
+      - .github/workflows/update-chilliwack-infra-faq.yml
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: audit-content-seo-2026-08-29
+          fetch-depth: 0
+
+      - name: Update Chilliwack FAQ wording
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('guardian-chilliwack.html')
+          text = path.read_text(encoding='utf-8')
+          old = '''칠리왁은 인구 10만 명 규모의 독립된 도시로, 마트·병원·쇼핑센터 등 생활 인프라가 갖춰져 있어 일상에 불편은 없습니다. <b>다만 한국 식료품점이나 한인 병원 같은 한인 인프라는 거의 없고</b>, 주말에 밴쿠버 도심으로 나가려면 차로 1시간 30분이 걸립니다. 이것이 단점이자 동시에 영어 몰입이 가능한 이유입니다.'''
+          new = '''칠리왁은 인구 10만 명 규모의 독립된 도시로, 마트·병원·쇼핑센터 등 생활 인프라가 갖춰져 있어 일상에 큰 불편은 없습니다. <b>코퀴틀람·버나비만큼 한인 상권이 크지는 않지만, 한식당과 한국어 상담이 가능한 약국·치과 등 기본적인 한인 생활 인프라도 확인됩니다.</b> 다만 대형 한인마트나 밀집된 한인 상권은 제한적이고, 밴쿠버 도심까지는 차로 약 1시간 30분이 걸립니다. 그만큼 일상에서 영어를 사용할 환경이 더 많다는 점은 칠리왁의 특징입니다.'''
+          if old not in text:
+              raise SystemExit('Target FAQ text not found; aborting without changes.')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+      - name: Remove one-time workflow and commit
+        run: |
+          rm -f .github/workflows/update-chilliwack-infra-faq.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Update Chilliwack Korean infrastructure FAQ"
+          git push origin HEAD:audit-content-seo-2026-08-29
