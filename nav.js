@@ -34,6 +34,27 @@
     {name:'하이로드 아카데미 가디언형', minGrade:8, maxGrade:11, minCost:48775, cost:'CA$48,775', care:1, href:'guardian-highroad.html', reason:'소규모 기독교 사립학교 환경을 선호하는 학생에게 적합'}
   ];
 
+  // 안드로이드 기본 select 팝업은 disabled 옵션 색상을 브라우저가 강제로 그립니다.
+  // 예산/자기관리 선택창은 페이지 안에서 직접 그려 선택 불가 상태를 확실히 표시합니다.
+  var style = document.createElement('style');
+  style.textContent =
+    '.finder-native-hidden{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;}' +
+    '.finder-custom-select{position:relative;width:100%;min-width:0;}' +
+    '.finder-custom-trigger{width:100%;min-height:44px;border:1px solid var(--line);border-radius:10px;padding:9px 38px 9px 10px;background:#FBF8F2;color:var(--ink);font:inherit;font-size:11.5px;text-align:left;cursor:pointer;position:relative;}' +
+    '.finder-custom-trigger:after{content:"⌄";position:absolute;right:12px;top:50%;transform:translateY(-55%);font-size:16px;color:var(--muted);}' +
+    '.finder-custom-trigger[aria-expanded="true"]{outline:2px solid var(--gold);outline-offset:1px;}' +
+    '.finder-custom-trigger:disabled{background:#F1F1EF;color:#A5A5A2;cursor:not-allowed;}' +
+    '.finder-custom-menu{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:80;background:#fff;border:1px solid #D8D5CE;border-radius:12px;box-shadow:0 12px 30px rgba(17,36,63,.18);overflow:hidden;}' +
+    '.finder-custom-menu[hidden]{display:none!important;}' +
+    '.finder-custom-option{display:flex;width:100%;min-height:48px;align-items:center;justify-content:space-between;gap:10px;border:0;border-bottom:1px solid #ECE9E3;background:#fff;padding:11px 13px;color:var(--ink);font:inherit;font-size:12px;text-align:left;cursor:pointer;}' +
+    '.finder-custom-option:last-child{border-bottom:0;}' +
+    '.finder-custom-option.is-selected{font-weight:700;background:#FBF6E9;}' +
+    '.finder-custom-option:disabled{opacity:1;background:#EFEFED;color:#A7A7A4;cursor:not-allowed;}' +
+    '.finder-custom-option:disabled .finder-unavailable{display:inline-flex;}' +
+    '.finder-unavailable{display:none;flex:0 0 auto;border-radius:999px;background:#D9D9D6;color:#777;font-size:9.5px;font-weight:700;padding:4px 7px;}' +
+    '@media (max-width:600px){.finder-custom-trigger{font-size:11.5px}.finder-custom-option{font-size:12px;min-height:52px}.finder-unavailable{font-size:9px;}}';
+  document.head.appendChild(style);
+
   function escapeHtml(value) {
     return String(value).replace(/[&<>\"']/g, function (char) {
       return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[char];
@@ -49,6 +70,105 @@
   function hideResult() {
     result.hidden = true;
     result.innerHTML = '';
+  }
+
+  function makeCustomSelect(select) {
+    var originalId = select.id;
+    var label = select.closest ? select.closest('label') : null;
+    var wrapper = document.createElement('div');
+    var trigger = document.createElement('button');
+    var menu = document.createElement('div');
+
+    wrapper.className = 'finder-custom-select';
+    trigger.type = 'button';
+    trigger.className = 'finder-custom-trigger';
+    trigger.id = originalId;
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    menu.className = 'finder-custom-menu';
+    menu.setAttribute('role', 'listbox');
+    menu.hidden = true;
+
+    select.id = originalId + '-native';
+    select.classList.add('finder-native-hidden');
+    select.required = false;
+    if (label) label.setAttribute('for', originalId);
+    select.insertAdjacentElement('afterend', wrapper);
+    wrapper.appendChild(trigger);
+    wrapper.appendChild(menu);
+
+    function close() {
+      menu.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    function render() {
+      var current = select.options[select.selectedIndex];
+      var placeholder = select.options[0] ? select.options[0].textContent : '선택';
+      trigger.textContent = current && current.value ? current.textContent : placeholder;
+      trigger.disabled = select.disabled;
+      menu.innerHTML = '';
+
+      optionItems(select).forEach(function (option) {
+        var item = document.createElement('button');
+        var text = document.createElement('span');
+        var unavailable = document.createElement('span');
+
+        item.type = 'button';
+        item.className = 'finder-custom-option' + (select.value === option.value ? ' is-selected' : '');
+        item.setAttribute('role', 'option');
+        item.setAttribute('aria-selected', select.value === option.value ? 'true' : 'false');
+        item.disabled = option.disabled;
+        text.textContent = option.textContent;
+        unavailable.className = 'finder-unavailable';
+        unavailable.textContent = '선택 불가';
+        item.appendChild(text);
+        item.appendChild(unavailable);
+
+        item.addEventListener('click', function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (option.disabled) return;
+          select.value = option.value;
+          select.dispatchEvent(new Event('change', {bubbles:true}));
+          close();
+          render();
+        });
+        menu.appendChild(item);
+      });
+    }
+
+    trigger.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (trigger.disabled) return;
+      var willOpen = menu.hidden;
+      document.querySelectorAll('.finder-custom-menu').forEach(function (otherMenu) {
+        if (otherMenu !== menu) otherMenu.hidden = true;
+      });
+      document.querySelectorAll('.finder-custom-trigger').forEach(function (otherTrigger) {
+        if (otherTrigger !== trigger) otherTrigger.setAttribute('aria-expanded', 'false');
+      });
+      menu.hidden = !willOpen;
+      trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    });
+
+    document.addEventListener('click', function (event) {
+      if (!wrapper.contains(event.target)) close();
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') close();
+    });
+
+    return {render:render, trigger:trigger, close:close};
+  }
+
+  var budgetUi = makeCustomSelect(budgetSelect);
+  var careUi = makeCustomSelect(careSelect);
+
+  function renderCustomSelects() {
+    budgetUi.render();
+    careUi.render();
   }
 
   function selectIfOnlyOneEnabled(select) {
@@ -77,6 +197,7 @@
     if (!grade || !budget) {
       careSelect.value = '';
       careOptions.forEach(function (option) { option.disabled = true; });
+      renderCustomSelects();
       return;
     }
 
@@ -92,6 +213,7 @@
     });
 
     selectIfOnlyOneEnabled(careSelect);
+    renderCustomSelects();
   }
 
   function syncBudgetOptions() {
@@ -104,6 +226,7 @@
       budgetSelect.value = '';
       budgetOptions.forEach(function (option) { option.disabled = true; });
       syncCareOptions();
+      renderCustomSelects();
       return;
     }
 
@@ -118,6 +241,7 @@
 
     selectIfOnlyOneEnabled(budgetSelect);
     syncCareOptions();
+    renderCustomSelects();
   }
 
   gradeSelect.addEventListener('change', function () {
@@ -130,18 +254,35 @@
     syncCareOptions();
   });
 
-  careSelect.addEventListener('change', hideResult);
+  careSelect.addEventListener('change', function () {
+    hideResult();
+    renderCustomSelects();
+  });
 
   // 처음에는 앞 단계가 선택되기 전까지 뒤 선택창을 비활성화합니다.
   syncBudgetOptions();
+  renderCustomSelects();
 
   form.addEventListener('submit', function (event) {
     event.preventDefault();
-    if (!form.reportValidity()) return;
 
     var grade = Number(gradeSelect.value);
     var budget = Number(budgetSelect.value);
     var care = Number(careSelect.value);
+
+    if (!grade) {
+      gradeSelect.focus();
+      return;
+    }
+    if (!budget) {
+      budgetUi.trigger.focus();
+      return;
+    }
+    if (!care) {
+      careUi.trigger.focus();
+      return;
+    }
+
     var eligible = programs.filter(function (program) {
       return grade >= program.minGrade && grade <= program.maxGrade &&
         program.minCost <= budget && program.care === care;
