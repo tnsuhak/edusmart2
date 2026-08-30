@@ -1,0 +1,76 @@
+name: One-time duration and mobile hero fix
+
+on:
+  push:
+    branches:
+      - seo-aeo-geo-polish-20260830
+    paths:
+      - '.github/workflows/one-time-duration-mobile-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo-aeo-geo-polish-20260830
+      - name: Normalize duration labels and mobile colors
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          ten_month = [
+            'dorm-young.html','dorm-junior.html','homestay.html',
+            'langley.html','burnaby.html','guardian-metro.html','guardian-highroad.html'
+          ]
+          for filename in ten_month:
+            p = Path(filename)
+            text = p.read_text(encoding='utf-8')
+            m = re.search(r'(<div class="hero-tags">)(.*?)(</div>)', text, re.S)
+            if not m:
+              continue
+            inner = m.group(2)
+            duration = '<span>🗓 정규학기 · 10개월</span>'
+            if '🗓' in inner:
+              inner = re.sub(r'<span>[^<]*🗓[^<]*</span>', duration, inner, count=1)
+            else:
+              inner = inner.rstrip() + '\n      ' + duration + '\n    '
+            text = text[:m.start(2)] + inner + text[m.end(2):]
+            p.write_text(text, encoding='utf-8')
+
+          # Golf: annual pricing is explicit, but exact month count is not stated on the page.
+          p = Path('golf.html')
+          text = p.read_text(encoding='utf-8')
+          m = re.search(r'(<div class="hero-tags">)(.*?)(</div>)', text, re.S)
+          if m and '🗓' not in m.group(2):
+            inner = m.group(2).rstrip() + '\n      <span>🗓 연간 프로그램</span>\n    '
+            text = text[:m.start(2)] + inner + text[m.end(2):]
+            p.write_text(text, encoding='utf-8')
+
+          # Keep Chilliwack's real flexible duration (3 months to 1 year) unchanged.
+
+          # Browser toolbar should match the site, not the yellow favicon.
+          for p in Path('.').glob('*.html'):
+            text = p.read_text(encoding='utf-8')
+            text = text.replace('<meta name="theme-color" content="#F4D717">', '<meta name="theme-color" content="#11243F">')
+            p.write_text(text, encoding='utf-8')
+
+          css = Path('style.css')
+          c = css.read_text(encoding='utf-8')
+          marker = '/* Mobile hero tag text contrast fix */'
+          if marker not in c:
+            c += '''\n\n/* Mobile hero tag text contrast fix */\n.hero-tags span,\n.hero-tags span *{\n  color:#EDEFF3 !important;\n  -webkit-text-fill-color:#EDEFF3 !important;\n}\n''' 
+          css.write_text(c, encoding='utf-8')
+          PY
+      - name: Commit changes and remove workflow
+        run: |
+          rm .github/workflows/one-time-duration-mobile-fix.yml
+          git config user.name "TNS Site Manager"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Normalize programme duration labels and mobile contrast"
+          git push origin HEAD:seo-aeo-geo-polish-20260830
