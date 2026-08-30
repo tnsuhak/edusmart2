@@ -55,7 +55,7 @@
     '.finder-custom-option:disabled .finder-unavailable{display:inline-flex;}' +
     '.finder-custom-option:disabled .finder-selected-check{display:none;}' +
     '.finder-unavailable{display:none;flex:0 0 auto;border-radius:999px;background:#D9D9D6;color:#777;font-size:9.5px;font-weight:700;padding:4px 7px;}' +
-    '@media (max-width:600px){.finder-custom-trigger{font-size:11.5px}.finder-custom-option{font-size:12px;min-height:52px}.finder-unavailable{font-size:9px}.finder-selected-check{font-size:15px;}}';
+    '@media (max-width:600px){.finder-field>.finder-custom-select{grid-column:1 / -1;width:100%;}.finder-custom-trigger{font-size:11.5px}.finder-custom-option{font-size:12px;min-height:52px}.finder-unavailable{font-size:9px}.finder-selected-check{font-size:15px;}}';
   document.head.appendChild(style);
 
   function escapeHtml(value) {
