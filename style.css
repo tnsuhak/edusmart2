@@ -534,7 +534,7 @@ h2 small{
   margin-bottom:4px;
 }
 .cta-box .cta-sub{font-size:12px; color:var(--muted); margin-bottom:16px;}
-.cta-btns{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+.cta-btns{display:grid; grid-template-columns:repeat(4,1fr); gap:10px;}
 .cta-btns a{
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   gap:6px;
@@ -552,6 +552,9 @@ h2 small{
 .cta-btns a.kakao{background:#FEE500; border-color:#F2D900;}
 .cta-btns a.kakao .lb{color:#3C1E1E;}
 .cta-btns a.kakao .sb{color:#6B5A38;}
+.cta-btns a.phone{background:#EAF1F8; border-color:#B9CCDE;}
+.cta-btns a.phone .lb{color:var(--navy);}
+.cta-btns a.phone .sb{color:#50657C;}
 .cta-btns a.naver{background:#03C75A; border-color:#02B351;}
 .cta-btns a.naver .lb{color:#fff;}
 .cta-btns a.naver .sb{color:#DFF6E7;}
@@ -559,9 +562,12 @@ h2 small{
 .cta-btns a.home .lb{color:var(--gold-light);}
 .cta-btns a.home .sb{color:#B9C3D4;}
 @media (max-width:480px){
-  .cta-btns{grid-template-columns:1fr;}
-  .cta-btns a{flex-direction:row; justify-content:flex-start; gap:12px; padding:14px 16px;}
+  .cta-btns{grid-template-columns:repeat(2,1fr);}
+  .cta-btns a{flex-direction:row; justify-content:flex-start; gap:8px; padding:12px 10px;}
   .cta-btns a .txt-wrap{text-align:left;}
+  .cta-btns a .ico{font-size:20px;}
+  .cta-btns a .lb{font-size:11.5px;}
+  .cta-btns a .sb{font-size:9.5px;}
 }
 
 /* ---------- FOOTER ---------- */
@@ -584,3 +590,22 @@ footer .disclaimer{
 }
 footer .disclaimer a{color:inherit; text-decoration:underline; text-underline-offset:2px;}
 @media (max-width:480px){ footer{margin:24px 18px 0;} }
+
+
+/* GEO/AEO freshness marker */
+.info-updated{
+  position:relative; z-index:1;
+  display:inline-block; margin:0 0 12px; padding:4px 9px;
+  border:1px solid rgba(255,255,255,.20); border-radius:999px;
+  background:rgba(255,255,255,.07); color:#C9D2DF;
+  font-size:10px; line-height:1.4; letter-spacing:.01em;
+}
+@media (max-width:480px){.info-updated{font-size:9.5px; margin-bottom:10px;}}
+
+
+/* Mobile hero tag text contrast fix */
+.hero-tags span,
+.hero-tags span *{
+  color:#EDEFF3 !important;
+  -webkit-text-fill-color:#EDEFF3 !important;
+}
