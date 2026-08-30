@@ -1,0 +1,74 @@
+name: One-time Edusmart preview finalizer
+
+on:
+  push:
+    branches:
+      - audit-content-seo-2026-08-29
+    paths:
+      - .github/workflows/finalize-preview.yml
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: audit-content-seo-2026-08-29
+          fetch-depth: 0
+
+      - name: Update domain, social metadata, brand tags and Chilliwack wording
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          OLD = 'https://edusmart-2.netlify.app'
+          NEW = 'https://edusmart-ca.netlify.app'
+          OG_IMAGE = NEW + '/images/dorm1.jpg'
+
+          for path in Path('.').glob('*.html'):
+              text = path.read_text(encoding='utf-8')
+              text = text.replace(OLD, NEW)
+              text = re.sub(r'\s*<span>#에듀스마트</span>', '', text)
+
+              if 'property="og:image"' not in text:
+                  twitter_summary = '<meta name="twitter:card" content="summary">'
+                  social = (
+                      f'<meta property="og:image" content="{OG_IMAGE}">\n'
+                      '<meta property="og:image:alt" content="TNS유학 캐나다 조기유학 프로그램 안내">\n'
+                      '<meta name="twitter:card" content="summary_large_image">'
+                  )
+                  text = text.replace(twitter_summary, social)
+              else:
+                  text = re.sub(r'<meta property="og:image" content="[^"]*">', f'<meta property="og:image" content="{OG_IMAGE}">', text)
+                  text = text.replace('<meta name="twitter:card" content="summary">', '<meta name="twitter:card" content="summary_large_image">')
+
+              path.write_text(text, encoding='utf-8')
+
+          chilli = Path('guardian-chilliwack.html')
+          text = chilli.read_text(encoding='utf-8')
+          text = text.replace(
+              '1995년 창설되어 그동안 수많은 국제 유학생이 거쳐 간 교육청입니다.',
+              '에듀스마트 안내 기준, 칠리왁 교육청의 국제학생 프로그램은 1995년에 시작되어 그동안 많은 국제학생이 참여해 왔습니다.'
+          )
+          chilli.write_text(text, encoding='utf-8')
+
+          for filename in ('robots.txt', 'sitemap.xml'):
+              path = Path(filename)
+              text = path.read_text(encoding='utf-8').replace(OLD, NEW)
+              if filename == 'sitemap.xml':
+                  text = re.sub(r'<lastmod>[^<]+</lastmod>', '<lastmod>2026-08-30</lastmod>', text)
+              path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Remove this one-time workflow and commit changes
+        run: |
+          rm -f .github/workflows/finalize-preview.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Finalize Edusmart CA preview metadata and wording"
+          git push origin HEAD:audit-content-seo-2026-08-29
