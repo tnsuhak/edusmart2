@@ -24,7 +24,7 @@
     {name:'코퀴틀람 기숙사 G5~7', minGrade:5, maxGrade:7, minCost:71000, cost:'CA$71,000~78,000', care:3, href:'dorm-young.html', reason:'기숙사 생활과 매일 생활·학습 관리가 필요한 저학년에게 적합'},
     {name:'코퀴틀람 기숙사 G7~11', minGrade:7, maxGrade:11, minCost:69700, cost:'CA$69,700~80,700', care:3, href:'dorm-junior.html', reason:'저녁 학습과 내신·입시 관리를 함께 원하는 학생에게 적합'},
     {name:'코퀴틀람 홈스테이 관리형', minGrade:7, maxGrade:11, minCost:65700, cost:'CA$65,700~76,700', care:2, href:'homestay.html', reason:'현지 가정 생활과 방과후 학습 지원을 함께 원하는 학생에게 적합'},
-    {name:'코퀴틀람 주니어 골프', minGrade:6, maxGrade:11, minCost:101700, cost:'CA$101,700~108,400', care:2, href:'golf.html', reason:'골프 훈련과 캐나다 학교생활을 함께 계획하는 학생을 위한 특화 과정'},
+    {name:'코퀴틀람 주니어 골프', minGrade:6, maxGrade:11, minCost:101700, cost:'CA$101,700~108,400', care:2, href:'golf.html', reason:'골프 훈련과 캐나다 학교생활을 함께 계획하는 학생을 위한 특화 과정', special:'golf'},
     {name:'랭리 대학 입시 관리형', minGrade:8, maxGrade:11, minCost:58500, cost:'CA$58,500', care:2, href:'langley.html', reason:'홈스테이 생활과 대학 입시 지원을 균형 있게 원하는 학생에게 적합'},
     {name:'버나비 아카데믹 관리형', minGrade:8, maxGrade:11, minCost:58500, cost:'CA$58,500', care:2, href:'burnaby.html', reason:'도심 접근성과 아카데믹 프로그램 상담을 함께 원하는 학생에게 적합'},
     {name:'랭리 교육청 가디언형', minGrade:8, maxGrade:11, minCost:38250, cost:'CA$38,250', care:1, href:'guardian-metro.html', reason:'자기주도 학습이 가능하고 비용 효율을 중시하는 학생에게 적합'},
@@ -55,6 +55,7 @@
     '.finder-custom-option:disabled .finder-unavailable{display:inline-flex;}' +
     '.finder-custom-option:disabled .finder-selected-check{display:none;}' +
     '.finder-unavailable{display:none;flex:0 0 auto;border-radius:999px;background:#D9D9D6;color:#777;font-size:9.5px;font-weight:700;padding:4px 7px;}' +
+    '.finder-fit-note{margin-top:8px;color:var(--muted);font-size:10.5px;line-height:1.55;}' +
     '@media (max-width:600px){.finder-custom-trigger{font-size:11.5px}.finder-custom-option{font-size:12px;min-height:52px}.finder-unavailable{font-size:9px}.finder-selected-check{font-size:15px;}}';
   document.head.appendChild(style);
 
@@ -189,9 +190,15 @@
     if (enabled.length === 1) select.value = enabled[0].value;
   }
 
-  function programsForGrade(grade) {
+  function generalProgramsForGrade(grade) {
     return programs.filter(function (program) {
-      return grade >= program.minGrade && grade <= program.maxGrade;
+      return !program.special && grade >= program.minGrade && grade <= program.maxGrade;
+    });
+  }
+
+  function golfProgramsForGrade(grade) {
+    return programs.filter(function (program) {
+      return program.special === 'golf' && grade >= program.minGrade && grade <= program.maxGrade;
     });
   }
 
@@ -209,15 +216,13 @@
       return;
     }
 
-    var candidates = programsForGrade(grade).filter(function (program) {
+    var candidates = generalProgramsForGrade(grade).filter(function (program) {
       return program.minCost <= budget;
     });
 
+    // 자기관리 수준은 추천 우선순위로 사용합니다. 일반 과정이 하나라도 있으면 세 수준 모두 선택할 수 있습니다.
     careOptions.forEach(function (option) {
-      var care = Number(option.value);
-      option.disabled = !candidates.some(function (program) {
-        return program.care === care;
-      });
+      option.disabled = candidates.length === 0;
     });
 
     selectIfOnlyOneEnabled(careSelect);
@@ -238,7 +243,8 @@
       return;
     }
 
-    var candidates = programsForGrade(grade);
+    // 예산 선택 가능 여부는 특화 골프가 아니라 일반 관리형/가디언형 과정 기준으로 판단합니다.
+    var candidates = generalProgramsForGrade(grade);
 
     budgetOptions.forEach(function (option) {
       var budget = Number(option.value);
@@ -291,20 +297,24 @@
       return;
     }
 
-    var eligible = programs.filter(function (program) {
-      return grade >= program.minGrade && grade <= program.maxGrade &&
-        program.minCost <= budget && program.care === care;
+    var eligible = generalProgramsForGrade(grade).filter(function (program) {
+      return program.minCost <= budget;
     });
 
     result.hidden = false;
     if (!eligible.length) {
       result.innerHTML = '<h3>조건을 다시 확인해 주세요</h3>' +
-        '<div class="finder-empty">현재 선택 조합으로 바로 추천할 수 있는 과정이 없습니다. 앞 단계 선택을 바꾸면 가능한 항목만 자동으로 활성화됩니다.</div>';
+        '<div class="finder-empty">현재 학년과 예산으로 추천할 수 있는 일반 과정이 없습니다. 앞 단계 선택을 바꾸면 가능한 항목만 자동으로 활성화됩니다.</div>';
       result.scrollIntoView({behavior:'smooth', block:'nearest'});
       return;
     }
 
+    // 관리 수준이 가까운 순으로 정렬하고, 같은 거리라면 더 관리가 강한 과정을 먼저 보여줍니다.
     eligible.sort(function (a, b) {
+      var careGapA = Math.abs(a.care - care);
+      var careGapB = Math.abs(b.care - care);
+      if (careGapA !== careGapB) return careGapA - careGapB;
+      if (a.care !== b.care) return b.care - a.care;
       return a.minCost - b.minCost;
     });
 
@@ -312,18 +322,35 @@
     var budgetLabel = budget === 45000 ? 'CA$45,000 이하' : (budget === 60000 ? 'CA$45,001~60,000' : 'CA$60,001 이상');
     var careLabel = care === 3 ? '매일 생활·학습 관리 필요' : (care === 2 ? '일부 도움 필요' : '스스로 학습 가능');
     var cards = selected.map(function (program, index) {
+      var fitNote = '';
+      if (program.care > care) {
+        fitNote = '선택하신 수준보다 관리가 조금 더 강한 과정입니다.';
+      } else if (program.care < care) {
+        fitNote = '선택하신 수준보다 학생 자율성이 더 큰 과정입니다.';
+      } else {
+        fitNote = '선택하신 자기관리 수준과 잘 맞는 과정입니다.';
+      }
+
       return '<article class="finder-card">' +
         '<div class="rank">추천 후보 ' + (index + 1) + '</div>' +
         '<h4>' + escapeHtml(program.name) + '</h4>' +
         '<div class="price">' + escapeHtml(program.cost) + ' / 연</div>' +
         '<div class="reason">' + escapeHtml(program.reason) + '</div>' +
+        '<div class="finder-fit-note">' + escapeHtml(fitNote) + '</div>' +
         '<a href="' + escapeHtml(program.href) + '">상세 정보 보기 →</a>' +
       '</article>';
     }).join('');
 
+    var golfOption = golfProgramsForGrade(grade).filter(function (program) {
+      return program.minCost <= budget;
+    })[0];
+    var golfHtml = golfOption ?
+      '<div class="finder-warning"><b>⛳ 골프를 병행하고 싶다면?</b> 일반 관리 수준 추천과는 별도로 <b>' + escapeHtml(golfOption.name) + '</b>도 가능합니다. 골프 훈련비가 포함되어 연간 비용은 ' + escapeHtml(golfOption.cost) + '입니다. <a href="' + escapeHtml(golfOption.href) + '"><b>골프 프로그램 보기 →</b></a></div>' : '';
+
     result.innerHTML = '<h3>우선 검토할 프로그램 ' + selected.length + '개</h3>' +
-      '<p>Grade ' + escapeHtml(grade) + ' · ' + escapeHtml(budgetLabel) + ' · ' + escapeHtml(careLabel) + ' 조건에 맞는 후보입니다.</p>' +
+      '<p>Grade ' + escapeHtml(grade) + ' · ' + escapeHtml(budgetLabel) + ' · ' + escapeHtml(careLabel) + ' 기준으로 일반 과정을 추천합니다.</p>' +
       '<div class="finder-cards">' + cards + '</div>' +
+      golfHtml +
       '<div class="finder-warning">이 결과는 1차 비교용입니다. 학교 자리, 입학 시기, 영어 수준, 비용 포함·불포함 항목을 확인한 뒤 최종 결정해야 합니다.</div>';
     result.scrollIntoView({behavior:'smooth', block:'nearest'});
   });
