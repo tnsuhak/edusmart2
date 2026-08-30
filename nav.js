@@ -48,11 +48,14 @@
     '.finder-custom-menu[hidden]{display:none!important;}' +
     '.finder-custom-option{display:flex;width:100%;min-height:48px;align-items:center;justify-content:space-between;gap:10px;border:0;border-bottom:1px solid #ECE9E3;background:#fff;padding:11px 13px;color:var(--ink);font:inherit;font-size:12px;text-align:left;cursor:pointer;}' +
     '.finder-custom-option:last-child{border-bottom:0;}' +
-    '.finder-custom-option.is-selected{font-weight:700;background:#FBF6E9;}' +
+    '.finder-custom-option.is-selected{font-weight:700;background:#fff;}' +
+    '.finder-selected-check{display:none;flex:0 0 auto;font-size:16px;font-weight:800;color:var(--navy-2);line-height:1;}' +
+    '.finder-custom-option.is-selected .finder-selected-check{display:inline-flex;}' +
     '.finder-custom-option:disabled{opacity:1;background:#EFEFED;color:#A7A7A4;cursor:not-allowed;}' +
     '.finder-custom-option:disabled .finder-unavailable{display:inline-flex;}' +
+    '.finder-custom-option:disabled .finder-selected-check{display:none;}' +
     '.finder-unavailable{display:none;flex:0 0 auto;border-radius:999px;background:#D9D9D6;color:#777;font-size:9.5px;font-weight:700;padding:4px 7px;}' +
-    '@media (max-width:600px){.finder-custom-trigger{font-size:11.5px}.finder-custom-option{font-size:12px;min-height:52px}.finder-unavailable{font-size:9px;}}';
+    '@media (max-width:600px){.finder-custom-trigger{font-size:11.5px}.finder-custom-option{font-size:12px;min-height:52px}.finder-unavailable{font-size:9px}.finder-selected-check{font-size:15px;}}';
   document.head.appendChild(style);
 
   function escapeHtml(value) {
@@ -113,6 +116,7 @@
         var item = document.createElement('button');
         var text = document.createElement('span');
         var unavailable = document.createElement('span');
+        var selectedCheck = document.createElement('span');
 
         item.type = 'button';
         item.className = 'finder-custom-option' + (select.value === option.value ? ' is-selected' : '');
@@ -122,8 +126,12 @@
         text.textContent = option.textContent;
         unavailable.className = 'finder-unavailable';
         unavailable.textContent = '선택 불가';
+        selectedCheck.className = 'finder-selected-check';
+        selectedCheck.textContent = '✓';
+        selectedCheck.setAttribute('aria-hidden', 'true');
         item.appendChild(text);
         item.appendChild(unavailable);
+        item.appendChild(selectedCheck);
 
         item.addEventListener('click', function (event) {
           event.preventDefault();
