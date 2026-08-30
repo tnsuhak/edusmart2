@@ -1,0 +1,62 @@
+name: One-time phone consultation CTA
+
+on:
+  push:
+    branches:
+      - seo-aeo-geo-polish-20260830
+    paths:
+      - .github/workflows/one-time-phone-cta.yml
+
+permissions:
+  contents: write
+
+jobs:
+  update-phone-cta:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo-aeo-geo-polish-20260830
+      - name: Add phone CTA beside Kakao
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          pages = [
+              'index.html','supervised.html','dorm-young.html','dorm-junior.html',
+              'homestay.html','golf.html','langley.html','burnaby.html',
+              'guardian.html','guardian-metro.html','guardian-chilliwack.html','guardian-highroad.html'
+          ]
+
+          phone = '''\n        <a class="phone" href="tel:01051500105" aria-label="TNS유학 전화상담 010-5150-0105">\n          <span class="ico">📞</span>\n          <span class="txt-wrap">\n            <span class="lb">전화상담</span><br>\n            <span class="sb">010-5150-0105</span>\n          </span>\n        </a>'''
+
+          for name in pages:
+              p = Path(name)
+              text = p.read_text(encoding='utf-8')
+              if 'class="phone" href="tel:01051500105"' not in text:
+                  text, n = re.subn(r'(<a class="kakao"[\s\S]*?</a>)', r'\1' + phone, text, count=1)
+                  if n != 1:
+                      raise SystemExit(f'Could not find Kakao CTA in {name}')
+                  p.write_text(text, encoding='utf-8')
+
+          cssp = Path('style.css')
+          css = cssp.read_text(encoding='utf-8')
+          css = css.replace('.cta-btns{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}',
+                            '.cta-btns{display:grid; grid-template-columns:repeat(4,1fr); gap:10px;}')
+          if '.cta-btns a.phone{' not in css:
+              marker = '.cta-btns a.naver{background:#03C75A; border-color:#02B351;}'
+              phone_css = '''.cta-btns a.phone{background:#EAF1F8; border-color:#B9CCDE;}\n.cta-btns a.phone .lb{color:var(--navy);}\n.cta-btns a.phone .sb{color:#50657C;}\n'''
+              css = css.replace(marker, phone_css + marker)
+          css = css.replace('@media (max-width:480px){\n  .cta-btns{grid-template-columns:1fr;}\n  .cta-btns a{flex-direction:row; justify-content:flex-start; gap:12px; padding:14px 16px;}\n  .cta-btns a .txt-wrap{text-align:left;}\n}',
+                            '@media (max-width:480px){\n  .cta-btns{grid-template-columns:repeat(2,1fr);}\n  .cta-btns a{flex-direction:row; justify-content:flex-start; gap:8px; padding:12px 10px;}\n  .cta-btns a .txt-wrap{text-align:left;}\n  .cta-btns a .ico{font-size:20px;}\n  .cta-btns a .lb{font-size:11.5px;}\n  .cta-btns a .sb{font-size:9.5px;}\n}')
+          cssp.write_text(css, encoding='utf-8')
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name "TNS Site Manager"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html supervised.html dorm-young.html dorm-junior.html homestay.html golf.html langley.html burnaby.html guardian.html guardian-metro.html guardian-chilliwack.html guardian-highroad.html style.css
+          git diff --cached --quiet && exit 0
+          git commit -m "Add click-to-call consultation CTA"
+          git push origin HEAD:seo-aeo-geo-polish-20260830
