@@ -1,0 +1,34 @@
+name: One-time search verification setup
+on:
+  push:
+    branches: [search-verification-2026-08-30]
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: search-verification-2026-08-30
+      - name: Add Naver verification meta
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          tag = '<meta name="naver-site-verification" content="1d92f724ea988efec2aea37b1ec05178c5b10716">'
+          if tag not in s:
+              needle = '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+              if needle not in s:
+                  raise SystemExit('viewport meta not found')
+              s = s.replace(needle, needle + '\n' + tag, 1)
+              p.write_text(s, encoding='utf-8')
+      - name: Remove one-time workflow and commit
+        run: |
+          rm -f .github/workflows/add-search-verification.yml
+          git config user.name "tnsuhak"
+          git config user.email "tnsuhak@gmail.com"
+          git add index.html .github/workflows/add-search-verification.yml
+          git commit -m "Add Google and Naver ownership verification" || exit 0
+          git push origin HEAD:search-verification-2026-08-30
