@@ -1,0 +1,25 @@
+name: One-time shorten golf finder v2
+on:
+  push:
+    branches:
+      - seo-aeo-geo-polish-20260830
+    paths:
+      - .github/workflows/one-time-shorten-golf-finder-v2-20260907.yml
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo-aeo-geo-polish-20260830
+      - name: Update finder copy
+        shell: bash
+        run: |
+          python3 -c "from pathlib import Path; p=Path('nav.js'); s=p.read_text(); s=s.replace('일반 관리 수준 추천과는 별도로','관리 수준 추천과는 별도로',1); s=s.replace(\" 골프 훈련비가 포함되어 연간 비용은 ' + escapeHtml(golfOption.cost) + '입니다.\",'',1); p.write_text(s); assert '골프 훈련비가 포함되어 연간 비용은' not in s"
+          git config user.name tnsuhak
+          git config user.email tnsuhak@gmail.com
+          git add nav.js
+          git commit -m "Shorten golf finder recommendation copy"
+          git push origin HEAD:seo-aeo-geo-polish-20260830
