@@ -28,7 +28,7 @@
     {name:'랭리 대학 입시 관리형', minGrade:8, maxGrade:11, minCost:58500, cost:'CA$58,500', care:2, href:'langley.html', reason:'홈스테이 생활과 대학 입시 지원을 균형 있게 원하는 학생에게 적합'},
     {name:'버나비 아카데믹 관리형', minGrade:8, maxGrade:11, minCost:58500, cost:'CA$58,500', care:2, href:'burnaby.html', reason:'도심 접근성과 아카데믹 프로그램 상담을 함께 원하는 학생에게 적합'},
     {name:'랭리 교육청 가디언형', minGrade:8, maxGrade:11, minCost:38250, cost:'CA$38,250', care:1, href:'guardian-metro.html', reason:'자기주도 학습이 가능하고 비용 효율을 중시하는 학생에게 적합'},
-    {name:'칠리왁 공립교육청 가디언형', minGrade:8, maxGrade:11, minCost:37450, cost:'CA$37,450', care:1, href:'guardian-chilliwack.html', reason:'영어 중심 생활환경과 비교적 낮은 비용을 우선하는 학생에게 적합'},
+    {name:'칠리왁 공립교육청 가디언형', minGrade:9, maxGrade:11, minCost:38450, cost:'CA$38,450', care:1, href:'guardian-chilliwack.html', reason:'영어 중심 생활환경과 비교적 낮은 비용을 우선하는 학생에게 적합'},
     {name:'버나비 교육청 가디언형', minGrade:8, maxGrade:11, minCost:42425, cost:'CA$42,425', care:1, href:'guardian-metro.html', reason:'자기관리 능력이 있고 도심 접근성을 중시하는 학생에게 적합'},
     {name:'코퀴틀람 교육청 가디언형', minGrade:8, maxGrade:11, minCost:44500, cost:'CA$44,500', care:1, href:'guardian-metro.html', reason:'자기주도 학습이 가능하고 아침 등교 지원이 필요한 학생에게 적합'},
     {name:'하이로드 아카데미 가디언형', minGrade:8, maxGrade:11, minCost:48775, cost:'CA$48,775', care:1, href:'guardian-highroad.html', reason:'소규모 기독교 사립학교 환경을 선호하는 학생에게 적합'}
