@@ -337,7 +337,7 @@
       return program.minCost <= budget;
     })[0];
     var golfHtml = golfOption ?
-      '<div class="finder-warning"><b>⛳ 골프를 병행하고 싶다면?</b> 일반 관리 수준 추천과는 별도로 <b>' + escapeHtml(golfOption.name) + '</b>도 가능합니다. 골프 훈련비가 포함되어 연간 비용은 ' + escapeHtml(golfOption.cost) + '입니다. <a href="' + escapeHtml(golfOption.href) + '"><b>골프 프로그램 보기 →</b></a></div>' : '';
+      '<div class="finder-warning"><b>⛳ 골프를 병행하고 싶다면?</b> 관리 수준 추천과는 별도로 <b>' + escapeHtml(golfOption.name) + '</b>도 가능합니다. <a href="' + escapeHtml(golfOption.href) + '"><b>골프 프로그램 보기 →</b></a></div>' : '';
 
     result.innerHTML = '<h3>우선 검토할 프로그램 ' + selected.length + '개</h3>' +
       '<p>Grade ' + escapeHtml(grade) + ' · ' + escapeHtml(budgetLabel) + ' · ' + escapeHtml(careLabel) + ' 조건에 맞는 일반 과정입니다.</p>' +
