@@ -1,0 +1,68 @@
+name: One-time date-only update badges
+
+on:
+  push:
+    branches: [seo-aeo-geo-polish-20260830]
+    paths: ['.github/workflows/one-time-date-only-update-badges-20260907.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo-aeo-geo-polish-20260830
+      - name: Keep only visible update date on subpages
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          changed=[]
+          checked=[]
+          pat=re.compile(r'(<div\s+class="info-updated"[^>]*>\s*정보\s*업데이트\s+)(\d{4}\.\d{2}\.\d{2})(.*?)(</div>)', re.S)
+
+          for p in sorted(Path('.').glob('*.html')):
+              if p.name == 'index.html':
+                  continue
+              s=p.read_text(encoding='utf-8')
+              if 'class="info-updated"' not in s:
+                  continue
+              checked.append(p.name)
+              def repl(m):
+                  return f'{m.group(1)}{m.group(2)}{m.group(4)}'
+              ns, n = pat.subn(repl, s)
+              if n == 0:
+                  raise SystemExit(f'Could not normalize info-updated badge in {p.name}')
+              if ns != s:
+                  p.write_text(ns, encoding='utf-8')
+                  changed.append(p.name)
+
+          # Verify all subpage badges contain only date text.
+          bad=[]
+          verify=re.compile(r'<div\s+class="info-updated"[^>]*>(.*?)</div>', re.S)
+          for p in sorted(Path('.').glob('*.html')):
+              if p.name == 'index.html':
+                  continue
+              s=p.read_text(encoding='utf-8')
+              for m in verify.finditer(s):
+                  text=re.sub(r'<[^>]+>', '', m.group(1)).strip()
+                  if not re.fullmatch(r'정보\s*업데이트\s+\d{4}\.\d{2}\.\d{2}', text):
+                      bad.append((p.name,text))
+
+          print('Checked:', checked)
+          print('Changed:', changed)
+          print('Bad badges:', bad)
+          if bad:
+              raise SystemExit('Non-date-only update badges remain')
+          PY
+          git config user.name "tnsuhak"
+          git config user.email "tnsuhak@gmail.com"
+          git add '*.html'
+          if ! git diff --cached --quiet; then
+            git commit -m "Simplify subpage update badges to date only"
+            git push origin HEAD:seo-aeo-geo-polish-20260830
+          fi
