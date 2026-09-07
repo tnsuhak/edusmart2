@@ -1,0 +1,51 @@
+name: One-time remove visible source attribution
+
+on:
+  push:
+    branches: [seo-aeo-geo-polish-20260830]
+    paths: ['.github/workflows/one-time-remove-visible-sources-20260907.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo-aeo-geo-polish-20260830
+      - name: Remove visible source sections from EduSmart HTML
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          labels = r'(?:자료\s*출처|공식\s*출처|참고\s*자료)'
+          changed = []
+          for p in Path('.').glob('*.html'):
+              s = p.read_text(encoding='utf-8')
+              before = s
+              s = re.sub(
+                  rf'\n\s*<section>\s*<span class="section-label">{labels}</span>.*?</section>',
+                  '', s, flags=re.S|re.I
+              )
+              if s != before:
+                  p.write_text(s, encoding='utf-8')
+                  changed.append(p.name)
+
+          print('Changed files:', changed)
+          print('Remaining visible source-label occurrences:')
+          for p in Path('.').glob('*.html'):
+              s = p.read_text(encoding='utf-8')
+              for term in ['자료 출처','공식 출처','참고 자료']:
+                  if term in s:
+                      print(p.name, term)
+          PY
+          git config user.name "tnsuhak"
+          git config user.email "tnsuhak@gmail.com"
+          git add '*.html'
+          if ! git diff --cached --quiet; then
+            git commit -m "Remove visible source attribution from EduSmart pages"
+            git push origin HEAD:seo-aeo-geo-polish-20260830
+          fi
