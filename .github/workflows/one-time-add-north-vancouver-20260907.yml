@@ -1,0 +1,148 @@
+name: One-time add North Vancouver programs
+
+on:
+  push:
+    branches: [seo-aeo-geo-polish-20260830]
+    paths:
+      - '.github/workflows/one-time-add-north-vancouver-20260907.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  expand:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo-aeo-geo-polish-20260830
+          fetch-depth: 0
+      - name: Add two North Vancouver managed programs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path('.')
+          htmls = sorted(root.glob('*.html'))
+
+          # 1) Shared navigation/count updates across existing pages.
+          nav_insert = '''        <a href="north-vancouver-public.html">노스밴쿠버 공립 관리형<small>G9~11 · Handsworth·Argyle·Sutherland</small></a>\n        <a href="north-vancouver-private.html">노스밴쿠버 사립 관리형<small>G9~11 · St. Thomas Aquinas</small></a>\n'''
+          for p in htmls:
+              s = p.read_text(encoding='utf-8')
+              s = s.replace('관리형 6개 + 가디언형 5개 선택지', '관리형 8개 + 가디언형 5개 선택지')
+              s = s.replace('관리형 6개 프로그램', '관리형 8개 프로그램')
+              s = s.replace('일반 관리형 6개', '일반 관리형 8개')
+              s = s.replace('11개 선택지 보기', '13개 선택지 보기')
+              if 'north-vancouver-public.html' not in s:
+                  m = re.search(r'(?m)^(\s*<a href="burnaby\.html"[^\n]*\n)', s)
+                  if m:
+                      s = s[:m.end()] + nav_insert + s[m.end():]
+              p.write_text(s, encoding='utf-8')
+
+          # 2) Homepage: 13 choices, 8 managed programs, new rows, current managed range.
+          p = root/'index.html'
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('VANCOUVER · 11 OPTIONS', 'VANCOUVER · 13 OPTIONS')
+          s = s.replace('조기유학 11개 선택지', '조기유학 13개 선택지')
+          s = s.replace('CA$58,500~80,700', 'CA$58,500~82,375')
+          if 'north-vancouver-public.html' not in s[s.find('<section>'):]:
+              pass
+          # Insert new managed rows immediately after the Burnaby managed row.
+          if '노스밴쿠버 공립 아카데믹 관리형' not in s:
+              pat = re.compile(r'(<tr>\s*<td class="school"><a href="burnaby\.html".*?</tr>)', re.S)
+              m = pat.search(s)
+              rows = '''\n      <tr>\n        <td class="school"><a href="north-vancouver-public.html" style="text-decoration:none;">노스밴쿠버 공립 아카데믹 관리형</a><span>North Vancouver · Handsworth / Argyle / Sutherland</span></td>\n        <td>G9~11</td>\n        <td>홈스테이</td>\n        <td>71,700<span class="krw">약 7,170만 원</span></td>\n      </tr>\n      <tr>\n        <td class="school"><a href="north-vancouver-private.html" style="text-decoration:none;">노스밴쿠버 사립 아카데믹 관리형</a><span>North Vancouver · St. Thomas Aquinas Regional Secondary</span></td>\n        <td>G9~11</td>\n        <td>홈스테이</td>\n        <td>82,375<span class="krw">약 8,238만 원</span></td>\n      </tr>'''
+              if m:
+                  s = s[:m.end()] + rows + s[m.end():]
+          s = s.replace('"dateModified": "2026-09-03"', '"dateModified": "2026-09-07"', 1)
+          s = s.replace('정보 업데이트 2026.09.03', '정보 업데이트 2026.09.07', 1)
+          p.write_text(s, encoding='utf-8')
+
+          # 3) Managed overview page: updated range + two new cards.
+          p = root/'supervised.html'
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('CA$58,500~80,700', 'CA$58,500~82,375')
+          if 'NORTH VANCOUVER · PUBLIC' not in s:
+              anchor = '<a href="burnaby.html"><div class="rg">BURNABY · G8~11</div><div class="rn">아카데믹 관리형</div><div class="rd">도심 접근성 · 아카데믹 프로그램 상담</div></a>'
+              cards = anchor + '\n      <a href="north-vancouver-public.html"><div class="rg">NORTH VANCOUVER · PUBLIC</div><div class="rn">공립 아카데믹 관리형</div><div class="rd">G9~11 · Handsworth·Argyle·Sutherland · CA$71,700</div></a>\n      <a href="north-vancouver-private.html"><div class="rg">NORTH VANCOUVER · PRIVATE</div><div class="rn">사립 아카데믹 관리형</div><div class="rd">G9~11 · St. Thomas Aquinas · CA$82,375</div></a>'
+              s = s.replace(anchor, cards)
+          s = s.replace('"dateModified": "2026-09-03"', '"dateModified": "2026-09-07"', 1)
+          s = s.replace('정보 업데이트 2026.09.03', '정보 업데이트 2026.09.07', 1)
+          s = s.replace('최종 확인: 2026년 8월 30일.', '최종 확인: 2026년 9월 7일.')
+          p.write_text(s, encoding='utf-8')
+
+          # 4) Guardian comparison page only needs the expanded managed-program range.
+          p = root/'guardian.html'
+          s = p.read_text(encoding='utf-8').replace('CA$58,500~80,700', 'CA$58,500~82,375')
+          p.write_text(s, encoding='utf-8')
+
+          # 5) Quick Finder: add both new options.
+          p = root/'nav.js'
+          s = p.read_text(encoding='utf-8')
+          if "north-vancouver-public.html" not in s:
+              needle = "    {name:'버나비 아카데믹 관리형', minGrade:8, maxGrade:11, minCost:58500, cost:'CA$58,500', care:2, href:'burnaby.html', reason:'도심 접근성과 아카데믹 프로그램 상담을 함께 원하는 학생에게 적합'},"
+              add = needle + "\n    {name:'노스밴쿠버 공립 아카데믹 관리형', minGrade:9, maxGrade:11, minCost:71700, cost:'CA$71,700', care:2, href:'north-vancouver-public.html', reason:'노스밴쿠버 공립학교와 홈스테이 생활, 아카데믹 관리를 함께 원하는 학생에게 적합'},\n    {name:'노스밴쿠버 사립 아카데믹 관리형', minGrade:9, maxGrade:11, minCost:82375, cost:'CA$82,375', care:2, href:'north-vancouver-private.html', reason:'가톨릭 사립학교 환경과 홈스테이, 아카데믹 관리를 함께 원하는 학생에게 적합'},"
+              s = s.replace(needle, add)
+          p.write_text(s, encoding='utf-8')
+
+          # Shared navigation used by the two new pages.
+          def menu(active):
+              items = [
+                ('supervised.html','관리형이란?','학업·생활관리 범위 안내'),
+                ('dorm-young.html','코퀴틀람 기숙사','G5~7 · 생활관리 중심'),
+                ('dorm-junior.html','코퀴틀람 기숙사','G7~11 · 내신·입시 중심'),
+                ('homestay.html','코퀴틀람 홈스테이','G7~11 · 현지 가정 생활'),
+                ('golf.html','주니어 골프','G6~11 · 골프+학업 병행'),
+                ('langley.html','랭리 관리형','G8~11 · 대학 입시 전문'),
+                ('burnaby.html','버나비 관리형','G8~11 · AP·IB 아카데믹'),
+                ('north-vancouver-public.html','노스밴쿠버 공립 관리형','G9~11 · Handsworth·Argyle·Sutherland'),
+                ('north-vancouver-private.html','노스밴쿠버 사립 관리형','G9~11 · St. Thomas Aquinas'),
+              ]
+              out = ['<nav class="gnav">','  <div class="gnav-inner">','    <a class="gnav-brand" href="index.html"><span class="dot"></span>TNS유학 · 캐나다 조기유학</a>','    <details class="gnav-menu">',f'      <summary>{"노스밴쿠버 공립 관리형" if active=="public" else "노스밴쿠버 사립 관리형"} <span class="caret">▼</span></summary>','      <div class="gnav-panel">','        <div class="grp">전체</div>','        <a href="index.html" class="wide">전체 프로그램 비교<small>관리형 8개 + 가디언형 5개 선택지</small></a>','        <div class="grp grp-managed">관리형 유학</div>']
+              for href,name,small in items:
+                  cls = ' class="active"' if (active=='public' and href=='north-vancouver-public.html') or (active=='private' and href=='north-vancouver-private.html') else ''
+                  out.append(f'        <a href="{href}"{cls}>{name}<small>{small}</small></a>')
+              out += ['        <div class="grp grp-guardian">가디언형 유학</div>','        <a href="guardian.html">가디언형이란?<small>관리형과 정면 비교</small></a>','        <a href="guardian-metro.html">버나비·랭리·코퀴틀람<small>G8~11 · 3개 교육청</small></a>','        <a href="guardian-chilliwack.html">칠리왁 공립교육청<small>G9~11 · 영어 중심 지역</small></a>','        <a href="guardian-highroad.html">칠리왁 하이로드 아카데미<small>G8~11 · 소규모 기독교 사립</small></a>','      </div>','    </details>','  </div>','</nav>']
+              return '\n'.join(out)
+
+          contact = '''  <section>\n    <span class="section-label">CONTACT</span>\n    <h2>상담이 필요하신가요?</h2>\n    <div class="cta-box">\n      <div class="cta-title">학년과 학교 성향부터 비교해 드립니다</div>\n      <div class="cta-sub">공립·사립 차이, 예산, 홈스테이와 관리 범위를 함께 확인해 보세요.</div>\n      <div class="cta-btns">\n        <a class="kakao" href="https://open.kakao.com/o/slehLvKi" target="_blank" rel="noopener"><span class="ico">💬</span><span class="txt-wrap"><span class="lb">카톡 상담</span><br><span class="sb">1:1 실시간 문의</span></span></a>\n        <a class="phone" href="tel:01051500105" aria-label="TNS유학 전화상담 010-5150-0105"><span class="ico">📞</span><span class="txt-wrap"><span class="lb">전화상담</span><br><span class="sb">010-5150-0105</span></span></a>\n        <a class="naver" href="https://cafe.naver.com/tnsuhak.cafe" target="_blank" rel="noopener"><span class="ico">🇳</span><span class="txt-wrap"><span class="lb">네이버 유학카페</span><br><span class="sb">회원 43,000명</span></span></a>\n        <a class="home" href="index.html"><span class="ico">↔</span><span class="txt-wrap"><span class="lb">전체 비교</span><br><span class="sb">13개 선택지 보기</span></span></a>\n      </div>\n    </div>\n  </section>'''
+
+          footer = '''  <footer>\n    <div class="ft-brand">TNS유학 · 해대쉽</div>\n    <div class="ft-sub">강호진 부장(말랑이) · 유학 전문 경력 18년 · 네이버 유학카페 43,000명 운영</div>\n    <div class="ft-contact">📱 010-5150-0105 &nbsp;|&nbsp; ☎ 02-3288-1733~5<br>💬 카카오톡 ID : stardancer &nbsp;|&nbsp; 📧 khj@tnsuhak.com</div>\n    <div class="ft-tags"><span>#노스밴쿠버조기유학</span><span>#캐나다관리형유학</span><span>#밴쿠버조기유학</span></div>\n    <div class="disclaimer">현지 프로그램 운영 및 생활 관리: 에듀스마트 · 한국 상담 및 지원 절차 안내: TNS유학.<br>비용과 서비스는 2026–27학년도 기준이며 변경될 수 있습니다. 최종 확인: 2026년 9월 7일.</div>\n  </footer>'''
+
+          public_page = f'''<!DOCTYPE html>\n<html lang="ko">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>노스밴쿠버 공립 아카데믹 관리형 유학 (G9~11) | 캐나다 조기유학 - TNS유학</title>\n<meta name="description" content="노스밴쿠버 공립 아카데믹 관리형 유학 G9~11. Handsworth, Argyle, Sutherland 공립학교와 캐네디언 홈스테이, 에듀스마트 학업 관리를 결합한 2026-27 프로그램. 10개월 CA$71,700.">\n<meta name="robots" content="index,follow">\n<link rel="canonical" href="https://edusmart-ca.netlify.app/north-vancouver-public.html">\n<meta property="og:type" content="article">\n<meta property="og:title" content="노스밴쿠버 공립 아카데믹 관리형 유학 (G9~11)">\n<meta property="og:description" content="Handsworth·Argyle·Sutherland + 홈스테이 + 아카데믹 관리, 10개월 CA$71,700.">\n<meta property="og:url" content="https://edusmart-ca.netlify.app/north-vancouver-public.html">\n<meta property="og:image" content="https://edusmart-ca.netlify.app/images/dorm1.jpg">\n<meta name="twitter:card" content="summary_large_image">\n<link rel="icon" href="/favicon.svg" type="image/svg+xml">\n<meta name="theme-color" content="#11243F">\n<link rel="stylesheet" href="style.css">\n<script type="application/ld+json">{{"@context":"https://schema.org","@graph":[{{"@type":"WebPage","name":"노스밴쿠버 공립 아카데믹 관리형 유학","url":"https://edusmart-ca.netlify.app/north-vancouver-public.html","inLanguage":"ko-KR","dateModified":"2026-09-07","isPartOf":{{"@type":"WebSite","name":"TNS유학 캐나다 조기유학 프로그램 비교","url":"https://edusmart-ca.netlify.app/"}},"publisher":{{"@type":"Organization","name":"TNS유학","url":"https://www.tnsuhak.com/","logo":"https://edusmart-ca.netlify.app/favicon.svg"}}}},{{"@type":"BreadcrumbList","itemListElement":[{{"@type":"ListItem","position":1,"name":"캐나다 조기유학 프로그램 비교","item":"https://edusmart-ca.netlify.app/"}},{{"@type":"ListItem","position":2,"name":"노스밴쿠버 공립 아카데믹 관리형 유학","item":"https://edusmart-ca.netlify.app/north-vancouver-public.html"}}]}}]}}</script>\n</head>\n<body>\n{menu('public')}\n<div class="page">\n  <div class="hero hero-managed">\n    <div class="info-updated">정보 업데이트 2026.09.07 · 2026–27 에듀스마트 최신 프로그램 비용표 기준</div>\n    <div class="kicker">NORTH VANCOUVER · PUBLIC</div>\n    <h1>노스밴쿠버 공립<br><span>아카데믹 관리형 (G9~11)</span></h1>\n    <p class="lead">노스밴쿠버 공립 세컨더리에서 정규수업을 듣고, 캐네디언 홈스테이와 에듀스마트의 아카데믹 관리를 결합한 Grade 9~11 대상 10개월 관리형 프로그램입니다.</p>\n    <div class="hero-tags"><span>👤 Grade 9~11</span><span>📍 North Vancouver, BC</span><span>🏡 캐네디언 홈스테이</span><span>💰 CA$71,700 · 10개월</span></div>\n    <div class="hero-note">학교 선택은 Handsworth Secondary, Argyle Secondary, Sutherland Secondary를 중심으로 검토하며 실제 배정 가능 여부는 지원 시점에 확인합니다.</div>\n  </div>\n  <section>\n    <span class="section-label">PROGRAM SNAPSHOT</span><h2>한눈에 보는 프로그램 개요</h2>\n    <div class="facts">\n      <div class="fact"><div class="icon">🎒</div><div class="label">대상 학년</div><div class="value">Grade 9~11</div></div>\n      <div class="fact"><div class="icon">🏫</div><div class="label">학교 옵션</div><div class="value">Handsworth · Argyle · Sutherland</div></div>\n      <div class="fact"><div class="icon">🏡</div><div class="label">숙소</div><div class="value">캐네디언 홈스테이</div></div>\n      <div class="fact"><div class="icon">💰</div><div class="label">프로그램 비용</div><div class="value">CA$71,700 · 10개월</div></div>\n    </div>\n  </section>\n  <section>\n    <span class="section-label">SCHOOL OPTIONS</span><h2>노스밴쿠버 공립학교 3개 선택지</h2>\n    <p class="prose">Handsworth Secondary, Argyle Secondary, Sutherland Secondary는 모두 North Vancouver School District 소속 세컨더리 스쿨입니다. 학교별 과목 구성과 자리가 다르므로 학생의 학년·성적·진학 목표에 맞춰 지원 시점에 우선순위를 정합니다.</p>\n    <div class="trio">\n      <div class="card"><div class="icon">🏫</div><div class="title">Handsworth Secondary</div><div class="desc">North Vancouver School District 공립 세컨더리</div></div>\n      <div class="card"><div class="icon">🏫</div><div class="title">Argyle Secondary</div><div class="desc">North Vancouver School District 공립 세컨더리</div></div>\n      <div class="card"><div class="icon">🏫</div><div class="title">Sutherland Secondary</div><div class="desc">North Vancouver School District 공립 세컨더리</div></div>\n    </div>\n  </section>\n  <section>\n    <span class="section-label">COST</span><h2>2026–27 프로그램 비용</h2>\n    <div class="cost-grid"><div class="cost-card a"><div class="tag2">G9~11 · 10개월</div><div class="school-name">노스밴쿠버 공립 아카데믹 관리형</div><div class="amount">CA$71,700</div><div class="krw">약 7,170만 원 · 환율 변동 가능</div></div></div>\n    <div class="cost-note"><div class="line"><span class="dot2">●</span>캐네디언 홈스테이에 따라 실제 비용은 소폭 달라질 수 있습니다.</div><div class="line"><span class="dot2">●</span>학비가 인상되면 추가 차액이 발생할 수 있습니다.</div><div class="line"><span class="dot2">●</span>교육청 원서 지원비는 표시 프로그램 비용에 포함되지 않습니다.</div><div class="line"><span class="dot2">●</span>의료보험·교통·개인비용 등 세부 포함 범위는 최종 견적에서 다시 확인합니다.</div></div>\n  </section>\n  <section>\n    <span class="section-label">FAQ</span><h2>자주 묻는 질문</h2>\n    <div class="faq-list">\n      <details class="faq-item"><summary><span class="q-badge">Q1</span>노스밴쿠버 공립 프로그램은 몇 학년부터 가능한가요?</summary><div class="a">에듀스마트의 2026–27 아카데믹 관리형 프로그램 대상은 <b>Grade 9~11</b>입니다.</div></details>\n      <details class="faq-item"><summary><span class="q-badge">Q2</span>세 학교 중 원하는 학교를 반드시 선택할 수 있나요?</summary><div class="a">학교별 좌석과 학년별 과목 상황이 달라 <b>희망 순위를 정해 검토하되 실제 배정 가능 여부는 지원 시점에 확인</b>해야 합니다.</div></details>\n      <details class="faq-item"><summary><span class="q-badge">Q3</span>사립 노스밴쿠버 프로그램과 가장 큰 차이는 무엇인가요?</summary><div class="a">공립 과정은 North Vancouver School District 학교를 이용하고 10개월 비용이 <b>CA$71,700</b>입니다. 사립 과정은 St. Thomas Aquinas Regional Secondary를 이용하며 <b>CA$82,375</b>입니다.</div></details>\n    </div>\n  </section>\n  <section><span class="section-label">RELATED</span><h2>함께 비교해 보세요</h2><div class="related"><a href="north-vancouver-private.html"><div class="rg">NORTH VANCOUVER · PRIVATE</div><div class="rn">사립 아카데믹 관리형</div><div class="rd">St. Thomas Aquinas · G9~11 · CA$82,375</div></a><a href="supervised.html"><div class="rg">COMPARE</div><div class="rn">관리형 유학 전체 비교</div><div class="rd">8개 관리형 프로그램을 한 번에 비교</div></a></div></section>\n  <section><span class="section-label">자료 출처</span><p class="prose" style="font-size:14px;">학교 확인: <a href="https://handsworth.sd44.ca/" target="_blank" rel="noopener">Handsworth Secondary</a> · <a href="https://argyle.sd44.ca/" target="_blank" rel="noopener">Argyle Secondary</a> · <a href="https://sutherland.sd44.ca/" target="_blank" rel="noopener">Sutherland Secondary</a>. 프로그램 대상·비용은 2026년 9월 3일 에듀스마트 최신 비용표 기준입니다.</p></section>\n{contact}\n{footer}\n</div>\n<script src="nav.js" defer></script>\n</body>\n</html>'''
+
+          private_page = f'''<!DOCTYPE html>\n<html lang="ko">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>노스밴쿠버 사립 아카데믹 관리형 유학 (G9~11) | St. Thomas Aquinas - TNS유학</title>\n<meta name="description" content="노스밴쿠버 St. Thomas Aquinas Regional Secondary 사립 아카데믹 관리형 유학 G9~11. 캐네디언 홈스테이와 에듀스마트 학업 관리, 2026-27 10개월 CA$82,375.">\n<meta name="robots" content="index,follow">\n<link rel="canonical" href="https://edusmart-ca.netlify.app/north-vancouver-private.html">\n<meta property="og:type" content="article">\n<meta property="og:title" content="노스밴쿠버 사립 아카데믹 관리형 유학 (G9~11)">\n<meta property="og:description" content="St. Thomas Aquinas Regional Secondary + 홈스테이 + 아카데믹 관리, 10개월 CA$82,375.">\n<meta property="og:url" content="https://edusmart-ca.netlify.app/north-vancouver-private.html">\n<meta property="og:image" content="https://edusmart-ca.netlify.app/images/dorm1.jpg">\n<meta name="twitter:card" content="summary_large_image">\n<link rel="icon" href="/favicon.svg" type="image/svg+xml">\n<meta name="theme-color" content="#11243F">\n<link rel="stylesheet" href="style.css">\n<script type="application/ld+json">{{"@context":"https://schema.org","@graph":[{{"@type":"WebPage","name":"노스밴쿠버 사립 아카데믹 관리형 유학","url":"https://edusmart-ca.netlify.app/north-vancouver-private.html","inLanguage":"ko-KR","dateModified":"2026-09-07","isPartOf":{{"@type":"WebSite","name":"TNS유학 캐나다 조기유학 프로그램 비교","url":"https://edusmart-ca.netlify.app/"}},"publisher":{{"@type":"Organization","name":"TNS유학","url":"https://www.tnsuhak.com/","logo":"https://edusmart-ca.netlify.app/favicon.svg"}}}},{{"@type":"BreadcrumbList","itemListElement":[{{"@type":"ListItem","position":1,"name":"캐나다 조기유학 프로그램 비교","item":"https://edusmart-ca.netlify.app/"}},{{"@type":"ListItem","position":2,"name":"노스밴쿠버 사립 아카데믹 관리형 유학","item":"https://edusmart-ca.netlify.app/north-vancouver-private.html"}}]}}]}}</script>\n</head>\n<body>\n{menu('private')}\n<div class="page">\n  <div class="hero hero-managed">\n    <div class="info-updated">정보 업데이트 2026.09.07 · 2026–27 에듀스마트 최신 프로그램 비용표 기준</div>\n    <div class="kicker">NORTH VANCOUVER · PRIVATE</div>\n    <h1>노스밴쿠버 사립<br><span>아카데믹 관리형 (G9~11)</span></h1>\n    <p class="lead">St. Thomas Aquinas Regional Secondary School의 정규수업, 캐네디언 홈스테이, 에듀스마트 아카데믹 관리를 결합한 Grade 9~11 대상 10개월 사립 관리형 프로그램입니다.</p>\n    <div class="hero-tags"><span>👤 Grade 9~11</span><span>📍 North Vancouver, BC</span><span>⛪ 가톨릭 사립학교</span><span>💰 CA$82,375 · 10개월</span></div>\n    <div class="hero-note">St. Thomas Aquinas는 North Vancouver의 남녀공학 가톨릭 사립 세컨더리입니다. 학교 자체는 Grade 8~12를 운영하지만 에듀스마트 관리형 프로그램 대상은 Grade 9~11입니다.</div>\n  </div>\n  <section>\n    <span class="section-label">PROGRAM SNAPSHOT</span><h2>한눈에 보는 프로그램 개요</h2>\n    <div class="facts"><div class="fact"><div class="icon">🎒</div><div class="label">대상 학년</div><div class="value">Grade 9~11</div></div><div class="fact"><div class="icon">🏫</div><div class="label">학교</div><div class="value">St. Thomas Aquinas Regional Secondary</div></div><div class="fact"><div class="icon">🏡</div><div class="label">숙소</div><div class="value">캐네디언 홈스테이</div></div><div class="fact"><div class="icon">💰</div><div class="label">프로그램 비용</div><div class="value">CA$82,375 · 10개월</div></div></div>\n  </section>\n  <section>\n    <span class="section-label">SCHOOL</span><h2>St. Thomas Aquinas는 어떤 학교인가요?</h2>\n    <p class="prose">St. Thomas Aquinas Regional Secondary School은 Catholic Independent Schools of Vancouver Archdiocese(CISVA) 산하의 <b>남녀공학 가톨릭 사립학교</b>이며 학교 자체는 Grade 8~12를 운영합니다. 학업, 예술, 스포츠와 다양한 교내활동을 함께 제공합니다.</p>\n    <div class="tip-box">💡 <b>비가톨릭 학생도 지원할 수 있습니다.</b> 학교 공식 안내에 따르면 비가톨릭 또는 종교 배경이 없는 학생도 Christian Education 과목을 이수해야 하며, 수업 참여에 불이익이 없도록 안내하고 있습니다.</div>\n  </section>\n  <section>\n    <span class="section-label">COST</span><h2>2026–27 프로그램 비용</h2>\n    <div class="cost-grid"><div class="cost-card a"><div class="tag2">G9~11 · 10개월</div><div class="school-name">노스밴쿠버 사립 아카데믹 관리형</div><div class="amount">CA$82,375</div><div class="krw">약 8,238만 원 · 환율 변동 가능</div></div></div>\n    <div class="cost-note"><div class="line"><span class="dot2">●</span>캐네디언 홈스테이에 따라 실제 비용은 소폭 달라질 수 있습니다.</div><div class="line"><span class="dot2">●</span>학비가 인상되면 추가 차액이 발생할 수 있습니다.</div><div class="line"><span class="dot2">●</span>학교 원서 지원비는 표시 프로그램 비용에 포함되지 않습니다.</div><div class="line"><span class="dot2">●</span><b>St. Thomas Aquinas 의료보험료는 별도</b>입니다.</div></div>\n  </section>\n  <section>\n    <span class="section-label">FAQ</span><h2>자주 묻는 질문</h2>\n    <div class="faq-list">\n      <details class="faq-item"><summary><span class="q-badge">Q1</span>가톨릭 신자가 아니어도 입학할 수 있나요?</summary><div class="a">네. 학교 공식 안내상 <b>비가톨릭 학생도 재학할 수 있습니다.</b> 다만 학교의 Christian Education 과목을 이수해야 합니다.</div></details>\n      <details class="faq-item"><summary><span class="q-badge">Q2</span>학교는 G8부터인데 왜 프로그램은 G9부터인가요?</summary><div class="a">St. Thomas Aquinas 학교 자체는 Grade 8~12이지만, <b>에듀스마트의 2026–27 아카데믹 관리형 상품은 Grade 9~11</b>로 안내되어 있습니다.</div></details>\n      <details class="faq-item"><summary><span class="q-badge">Q3</span>공립 노스밴쿠버 프로그램과 비용 차이는 얼마인가요?</summary><div class="a">공립 아카데믹 관리형은 <b>CA$71,700</b>, St. Thomas Aquinas 사립 관리형은 <b>CA$82,375</b>로 표시 총액 기준 CA$10,675 차이입니다. 포함 항목과 학교 성격이 다르므로 금액만으로 결정하기보다 함께 비교하는 것이 좋습니다.</div></details>\n    </div>\n  </section>\n  <section><span class="section-label">RELATED</span><h2>함께 비교해 보세요</h2><div class="related"><a href="north-vancouver-public.html"><div class="rg">NORTH VANCOUVER · PUBLIC</div><div class="rn">공립 아카데믹 관리형</div><div class="rd">Handsworth·Argyle·Sutherland · CA$71,700</div></a><a href="supervised.html"><div class="rg">COMPARE</div><div class="rn">관리형 유학 전체 비교</div><div class="rd">8개 관리형 프로그램을 한 번에 비교</div></a></div></section>\n  <section><span class="section-label">자료 출처</span><p class="prose" style="font-size:14px;">학교 확인: <a href="https://aquinas.org/" target="_blank" rel="noopener">St. Thomas Aquinas Regional Secondary</a> · <a href="https://aquinas.org/academic-program/christian-education/" target="_blank" rel="noopener">Christian Education 안내</a>. 프로그램 대상·비용은 2026년 9월 3일 에듀스마트 최신 비용표 기준입니다.</p></section>\n{contact}\n{footer}\n</div>\n<script src="nav.js" defer></script>\n</body>\n</html>'''
+
+          (root/'north-vancouver-public.html').write_text(public_page, encoding='utf-8')
+          (root/'north-vancouver-private.html').write_text(private_page, encoding='utf-8')
+
+          # 6) Sitemap: 14 indexable pages and fresh homepage/managed overview timestamps.
+          p = root/'sitemap.xml'
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('<loc>https://edusmart-ca.netlify.app/</loc>\n    <lastmod>2026-08-30</lastmod>', '<loc>https://edusmart-ca.netlify.app/</loc>\n    <lastmod>2026-09-07</lastmod>')
+          s = s.replace('<loc>https://edusmart-ca.netlify.app/supervised.html</loc>\n    <lastmod>2026-08-30</lastmod>', '<loc>https://edusmart-ca.netlify.app/supervised.html</loc>\n    <lastmod>2026-09-07</lastmod>')
+          if 'north-vancouver-public.html' not in s:
+              extra = '''  <url>\n    <loc>https://edusmart-ca.netlify.app/north-vancouver-public.html</loc>\n    <lastmod>2026-09-07</lastmod>\n  </url>\n  <url>\n    <loc>https://edusmart-ca.netlify.app/north-vancouver-private.html</loc>\n    <lastmod>2026-09-07</lastmod>\n  </url>\n'''
+              s = s.replace('</urlset>', extra + '</urlset>')
+          p.write_text(s, encoding='utf-8')
+
+          # Basic checks before committing.
+          for fn in ['index.html','supervised.html','north-vancouver-public.html','north-vancouver-private.html','nav.js','sitemap.xml']:
+              txt = (root/fn).read_text(encoding='utf-8')
+              assert 'north-vancouver-public.html' in txt or fn == 'sitemap.xml'
+          for fn in ['north-vancouver-public.html','north-vancouver-private.html']:
+              txt = (root/fn).read_text(encoding='utf-8')
+              assert txt.count('<h1>') == 1
+              assert '<link rel="canonical"' in txt
+              assert 'application/ld+json' in txt
+
+          # Remove this one-time workflow in the same resulting commit.
+          Path('.github/workflows/one-time-add-north-vancouver-20260907.yml').unlink(missing_ok=True)
+          PY
+
+          git config user.name "TNS Site Manager"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Add North Vancouver public and private managed programs"
+          git push origin HEAD:seo-aeo-geo-polish-20260830
