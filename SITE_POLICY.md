@@ -19,6 +19,13 @@
 - Search-engine structured data may contain appropriate entity URLs because those are not user-facing source attribution.
 - News is currently disabled for this site. If news publishing is enabled in the future, follow the project-wide news-source policy unless a newer site-specific policy is approved.
 
+## Visible update-date policy
+
+- On public subpages, the update badge must display **only** `정보 업데이트 YYYY.MM.DD`.
+- Do not append source names, academic-year labels, cost-table notes, operating-guide notes, or phrases such as `~ 기준` after the visible update date.
+- Keep detailed basis/source/version information internal in GitHub, working notes, or central management configuration rather than in the public update badge.
+- When content is materially updated, change the visible date to the actual update date while preserving the date-only format.
+
 This policy may be overridden only when there is a specific legal, contractual, compliance, or explicit user-requested reason.
 
 Updated: 2026-09-07
