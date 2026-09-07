@@ -570,6 +570,23 @@ h2 small{
   .cta-btns a .sb{font-size:9.5px;}
 }
 
+
+/* ---------- CTA 2 + 3 ROW LAYOUT ---------- */
+.cta-btns-top{grid-template-columns:repeat(2,1fr); margin-bottom:10px;}
+.cta-btns-bottom{grid-template-columns:repeat(3,1fr);}
+.cta-btns a.openchat{background:#FFF4B8; border-color:#E7CF58;}
+.cta-btns a.openchat .lb{color:#3C2D12;}
+.cta-btns a.openchat .sb{color:#74633D;}
+@media (max-width:480px){
+  .cta-btns-top{grid-template-columns:repeat(2,1fr);}
+  .cta-btns-bottom{grid-template-columns:repeat(3,1fr);}
+  .cta-btns-bottom a{flex-direction:column; justify-content:center; gap:6px; padding:12px 6px;}
+  .cta-btns-bottom a .txt-wrap{text-align:center;}
+  .cta-btns-bottom a .ico{font-size:19px;}
+  .cta-btns-bottom a .lb{font-size:10.5px; line-height:1.35;}
+  .cta-btns-bottom a .sb{font-size:8.8px; line-height:1.35;}
+}
+
 /* ---------- FOOTER ---------- */
 footer{
   margin:32px 28px 0; background:var(--navy); color:#fff;
