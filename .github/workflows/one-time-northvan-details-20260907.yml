@@ -1,0 +1,264 @@
+name: One-time North Vancouver detail expansion
+
+on:
+  push:
+    branches:
+      - seo-aeo-geo-polish-20260830
+    paths:
+      - '.github/workflows/one-time-northvan-details-20260907.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  expand:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo-aeo-geo-polish-20260830
+      - name: Expand North Vancouver program details
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          # Keep global menu/comparison wording consistent with the newly supplied North Vancouver source.
+          for p in Path('.').glob('*.html'):
+              s = p.read_text(encoding='utf-8')
+              s = s.replace('G9~11 · Handsworth·Argyle·Sutherland</small>', 'G9~11 · Handsworth·Argyle·Sutherland·Carson Graham</small>')
+              s = s.replace('Handsworth / Argyle / Sutherland</span>', 'Handsworth / Argyle / Sutherland / Carson Graham</span>')
+              s = s.replace('Handsworth·Argyle·Sutherland · CA$71,700', 'Handsworth·Argyle·Sutherland·Carson Graham · CA$71,700')
+              p.write_text(s, encoding='utf-8')
+
+          common_academic = r'''
+  <!-- NORTHVAN-ACADEMIC-DETAILS -->
+  <section>
+    <span class="section-label">ACADEMIC MANAGEMENT</span>
+    <h2>주 3회 방과후 수업 + 소그룹 학업관리</h2>
+    <p class="prose">학교 수업이 끝난 뒤 노스밴쿠버 학업센터에서 <b>주 3회, 회당 1.5시간</b> 영어 중심의 내신 관리 수업을 진행합니다. 첫날 레벨테스트를 거쳐 학생 수준에 맞는 반을 배정하고, <b>한 반 최대 4명</b>의 소그룹으로 운영합니다.</p>
+    <div class="strengths">
+      <div class="strength"><span class="icon">📚</span><div class="title">G9~10 영어 집중</div><div class="desc">Evidence-based Reading & Writing, Science of Reading, 이미지 어휘 등 영어 기반 학업 역량 강화</div></div>
+      <div class="strength"><span class="icon">📝</span><div class="title">G11 내신·과제 관리</div><div class="desc">학교 내신 일정과 과제를 점검하고 대학 진학을 위한 학업 흐름을 함께 관리</div></div>
+      <div class="strength"><span class="icon">🎯</span><div class="title">SAT·AP 추가 옵션</div><div class="desc">필요 시 1:1 개별 과목 과외와 SAT·AP 수업을 별도 비용으로 추가 가능</div></div>
+    </div>
+    <div class="facts" style="margin-top:12px;">
+      <div class="fact"><div class="icon">✅</div><div class="label">개인별 학습관리</div><div class="value">수업 결과에 맞춘 HW·제출상태 관리</div></div>
+      <div class="fact"><div class="icon">📈</div><div class="label">과목별 성취도</div><div class="value">내신 · SAT · AP 변화 추세 확인</div></div>
+      <div class="fact"><div class="icon">💬</div><div class="label">코치 피드백</div><div class="value">이번 주 관찰·보완점·다음 목표 공유</div></div>
+      <div class="fact"><div class="icon">👨‍👩‍👧</div><div class="label">학부모 소통</div><div class="value">단톡방·전화·학부모 앱을 통한 수시 공유</div></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="section-label">WEEKLY SCHEDULE</span>
+    <h2>노스밴쿠버 관리형 방과후 수업 예시</h2>
+    <p class="prose">정규수업 후 월·수·금 중 <b>오후 4시 또는 오후 5시 30분</b> 블록에서 수업합니다. 학생은 레벨과 필요에 따라 블록 A 또는 B 중 한 블록으로 배정됩니다.</p>
+    <div class="table-scroll" aria-label="노스밴쿠버 관리형 방과후 수업 시간표">
+      <table class="dtable schedule-table">
+        <tr><th>시간</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th></tr>
+        <tr><td class="item">08:00–15:00</td><td colspan="5" class="schoolday">캐나다 공립·사립학교 정규수업</td></tr>
+        <tr>
+          <td class="item">블록 A<br>16:00–17:30</td>
+          <td><b>Evidence-based Reading & Writing</b><br><small>핵심 주장·근거·글의 구조 분석</small></td>
+          <td>—</td>
+          <td><b>Science of Reading · 이미지 어휘</b><br><small>유창성·문맥어휘·자체 개발 단어장</small></td>
+          <td>—</td>
+          <td><b>Digital SAT Reading & Writing</b><br><small>문제 유형·문법·근거 중심 풀이</small></td>
+        </tr>
+        <tr>
+          <td class="item">블록 B<br>17:30–19:00</td>
+          <td><b>Digital SAT Reading & Writing</b><br><small>문제 유형·문법·근거 중심 풀이</small></td>
+          <td>—</td>
+          <td><b>Evidence-based Reading & Writing</b><br><small>핵심 주장·근거·글의 구조 분석</small></td>
+          <td>—</td>
+          <td><b>Science of Reading · 이미지 어휘</b><br><small>유창성·문맥어휘·자체 개발 단어장</small></td>
+        </tr>
+        <tr><td class="item">19:00–20:30</td><td colspan="5" class="schoolday">홈스테이 복귀 · 저녁식사 · 개인시간 관리</td></tr>
+      </table>
+    </div>
+    <div class="week-note"><b>운영 기준</b><br>주 3회 · 회당 1.5시간 · 한 반 최대 4명 · 첫날 레벨테스트 후 수준별 배정<br><small>현지 사정과 학생 구성에 따라 방과후 수업 스케줄과 과목은 변경될 수 있습니다.</small></div>
+  </section>
+
+  <section>
+    <span class="section-label">LIFE & SUPPORT</span>
+    <h2>생활·액티비티·부모 소통까지 함께 관리</h2>
+    <div class="two-col">
+      <div class="listbox"><h4>생활 / 액티비티 서비스</h4><ul><li>균형 잡힌 식단으로 하루 3식 제공</li><li>홈스테이 숙소는 1인 1실 제공</li><li>학교 봉사활동 및 외부 스포츠·악기 프로그램 등록 관리</li></ul></div>
+      <div class="listbox"><h4>학업 / 관리 서비스</h4><ul><li>주 3회 영어 중심 내신 관리 수업</li><li>캐나다 대학 컨설팅 제공</li><li>미국 대학 컨설팅은 추가 비용으로 제공</li><li>단톡방·전화 등을 통해 부모님께 학생 소식 공유</li></ul></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="section-label">NORTH VANCOUVER LEARNING CENTRE</span>
+    <h2>노스밴쿠버 현지 학습센터에서 직접 관리</h2>
+    <p class="prose">밝고 차분한 상담공간과 소그룹 학습공간에서 학생별 수업, 멘토링과 진학상담을 진행합니다. 학교생활과 방과후 학업, 대학 진학 준비가 따로 움직이지 않도록 현지 교육팀이 연결해 관리합니다.</p>
+    <div class="gallery two nv-center-gallery">
+      <figure><img src="https://framerusercontent.com/images/KwIXUUN4ZpPc1eE7whOO8OR36E0.png?width=1600&height=1067" alt="노스밴쿠버 학습센터 건물 외관" loading="lazy" decoding="async"><figcaption>노스밴쿠버 센터 건물 외관</figcaption></figure>
+      <figure><img src="https://framerusercontent.com/images/L68rcuVXbpmoSpwapT1chClos.jpeg?width=640&height=853" alt="노스밴쿠버 학습센터 리셉션과 상담 데스크" loading="lazy" decoding="async"><figcaption>리셉션과 상담 데스크</figcaption></figure>
+      <figure><img src="https://framerusercontent.com/images/UuATvGzRgFJ7xEhc11g6B3SBJAM.jpeg?width=640&height=480" alt="노스밴쿠버 학습센터 집중형 학습공간" loading="lazy" decoding="async"><figcaption>집중형 학습공간</figcaption></figure>
+      <figure><img src="https://framerusercontent.com/images/3nYelMPC23KTJlXhOnnmnXFkOM.jpeg?width=640&height=484" alt="노스밴쿠버 학습센터 학부모 대기 상담공간" loading="lazy" decoding="async"><figcaption>학부모 대기·상담공간</figcaption></figure>
+    </div>
+    <div class="coaches" style="margin-top:12px;">
+      <div class="coach"><div class="role">ACADEMIC DIRECTOR</div><h4>Daniel Kim</h4><ul><li>연세대학교 경영학사</li><li>SFU 경제학 석사</li><li>전 PwC · 전 SFU Financial Services</li><li>대학진학 컨설팅 15년 이상</li><li>전 세한아카데미 북미 총괄·대표</li></ul></div>
+      <div class="coach"><div class="role">ACADEMIC CENTRE</div><h4>장기 진학관리</h4><ul><li>학년별 과목선택·시험·활동 로드맵</li><li>내신·SAT·AP를 하나의 학업전략으로 관리</li><li>학생별 과제·성취도·코치 피드백 기록</li><li>필요 시 대학지원 멘토링 별도 진행</li></ul></div>
+    </div>
+  </section>
+'''
+
+          public_school = r'''
+  <section>
+    <span class="section-label">SCHOOL OPTIONS</span><h2>노스밴쿠버 공립학교 4개 선택지</h2>
+    <p class="prose">Handsworth, Argyle, Sutherland, Carson Graham을 중심으로 학생의 성적·과목·진학 목표와 지원 시점의 좌석을 함께 검토합니다.</p>
+    <div class="schools">
+      <div class="school-card"><span class="tag public">PUBLIC</span><h3>Handsworth Secondary</h3><div class="desc">약 1,500명 이상 규모. English·French Immersion, AP, 스포츠·음악 및 30개 이상의 클럽을 운영합니다.</div></div>
+      <div class="school-card"><span class="tag public">PUBLIC</span><h3>Argyle Secondary</h3><div class="desc">Lynn Valley 지역. English·French Immersion, Digital Media Academy(DMA), AP, 음악·스포츠 프로그램이 특징입니다.</div></div>
+      <div class="school-card"><span class="tag public">PUBLIC</span><h3>Sutherland Secondary</h3><div class="desc">North Vancouver School District의 Semester School로 예술·스포츠·진로·커리어 프로그램을 제공합니다.</div></div>
+      <div class="school-card"><span class="tag public">PUBLIC</span><h3>Carson Graham Secondary</h3><div class="desc">약 1,400명 규모. IB MYP(8–10)와 IB Diploma(11–12), 스포츠·음악 프로그램을 운영합니다.</div></div>
+    </div>
+    <div class="gallery two" style="margin-top:12px;">
+      <figure><img src="https://framerusercontent.com/images/1JjLZmun2NwVMRReu6oe14YuU.png?width=960&height=652" alt="Handsworth Secondary School" loading="lazy" decoding="async"><figcaption>Handsworth Secondary School</figcaption></figure>
+      <figure><img src="https://framerusercontent.com/images/Er9qaVgGKtgnRCBGgQOtxLnlfxk.png?width=1600&height=1202" alt="Argyle Secondary School" loading="lazy" decoding="async"><figcaption>Argyle Secondary School</figcaption></figure>
+      <figure><img src="https://framerusercontent.com/images/LdmrmfMyXf57r0lQfnAZxIy8QU.png?width=1600&height=838" alt="Sutherland Secondary School" loading="lazy" decoding="async"><figcaption>Sutherland Secondary School</figcaption></figure>
+      <figure><img src="https://framerusercontent.com/images/ulzW2HZfHnW0AlMaz6pp05Ahqu8.png?width=1318&height=989" alt="Carson Graham Secondary School" loading="lazy" decoding="async"><figcaption>Carson Graham Secondary School</figcaption></figure>
+    </div>
+  </section>
+'''
+
+          private_school = r'''
+  <section>
+    <span class="section-label">SCHOOL</span><h2>St. Thomas Aquinas는 어떤 학교인가요?</h2>
+    <p class="prose">St. Thomas Aquinas Regional Secondary School은 North Vancouver의 <b>남녀공학 가톨릭 사립학교</b>입니다. 학교 자체는 Grade 8~12를 운영하며, 학업 성취와 대학 진학을 중요하게 보는 환경에서 예술·스포츠·교내활동을 함께 제공합니다.</p>
+    <img class="gallery-hero" src="https://framerusercontent.com/images/R2XOah3pYwrL6Q58bBt4MnApj4.png?width=1600&height=908" alt="St. Thomas Aquinas Regional Secondary School" loading="lazy" decoding="async">
+    <div class="tip-box">💡 <b>현재 TNS 사이트의 프로그램 대상과 가격은 9월 3일 최신 비용표를 우선 적용합니다.</b> 따라서 G9~11, 10개월 CA$82,375로 안내합니다.</div>
+  </section>
+'''
+
+          public_cost = r'''
+  <section>
+    <span class="section-label">COST & INCLUSIONS</span><h2>2026–27 프로그램 비용과 포함 범위</h2>
+    <div class="cost-grid"><div class="cost-card a"><div class="tag2">G9~11 · 10개월</div><div class="school-name">노스밴쿠버 공립 아카데믹 관리형</div><div class="amount">CA$71,700</div><div class="krw">약 7,170만 원 · 환율 변동 가능</div></div></div>
+    <div class="two-col" style="margin-top:14px;">
+      <div class="listbox"><h4>포함 내용</h4><ul><li>공립학교 학비</li><li>의료보험비</li><li>캐네디언 홈스테이비</li><li>방과후 수업비 · 주 3회</li><li>풀가디언비</li></ul></div>
+      <div class="listbox"><h4>불포함 내용</h4><ul><li>교육청·학교 등록비</li><li>교복·교재·준비물</li><li>학교 액티비티</li><li>악기 구입·렌트</li><li>개인 액티비티·용돈</li></ul></div>
+    </div>
+    <div class="facts" style="margin-top:12px;"><div class="fact"><div class="icon">💳</div><div class="label">계약금</div><div class="value">CA$3,000</div></div><div class="fact"><div class="icon">➕</div><div class="label">추가 옵션</div><div class="value">1:1 튜터 CA$90/시간 · G11 멘토링 CA$9,000/년</div></div></div>
+    <div class="cost-note"><div class="line"><span class="dot2">●</span>배정되는 홈스테이에 따라 실제 비용이 달라질 수 있습니다.</div><div class="line"><span class="dot2">●</span>한인 홈스테이 선택 시 추가 비용이 발생할 수 있습니다.</div><div class="line"><span class="dot2">●</span>교육청 학비 인상 시 추가 차액이 발생할 수 있습니다.</div><div class="line"><span class="dot2">●</span>현지 사정에 따라 방과후 수업 일정과 과목이 변경될 수 있습니다.</div></div>
+  </section>
+'''
+
+          private_cost = r'''
+  <section>
+    <span class="section-label">COST & INCLUSIONS</span><h2>2026–27 프로그램 비용과 포함 범위</h2>
+    <div class="cost-grid"><div class="cost-card a"><div class="tag2">G9~11 · 10개월</div><div class="school-name">노스밴쿠버 사립 아카데믹 관리형</div><div class="amount">CA$82,375</div><div class="krw">약 8,238만 원 · 환율 변동 가능</div></div></div>
+    <div class="two-col" style="margin-top:14px;">
+      <div class="listbox"><h4>포함 내용</h4><ul><li>St. Thomas Aquinas 학비</li><li>캐네디언 홈스테이비</li><li>방과후 수업비 · 주 3회</li><li>풀가디언비</li></ul></div>
+      <div class="listbox"><h4>불포함 내용</h4><ul><li><b>의료보험비</b></li><li>학교 등록비</li><li>교복·교재·준비물</li><li>학교 액티비티</li><li>악기 구입·렌트</li><li>개인 액티비티·용돈</li></ul></div>
+    </div>
+    <div class="facts" style="margin-top:12px;"><div class="fact"><div class="icon">💳</div><div class="label">계약금</div><div class="value">CA$3,000</div></div><div class="fact"><div class="icon">➕</div><div class="label">추가 옵션</div><div class="value">1:1 튜터 CA$90/시간 · G11 멘토링 CA$9,000/년</div></div></div>
+    <div class="cost-note"><div class="line"><span class="dot2">●</span>배정되는 홈스테이에 따라 실제 비용이 달라질 수 있습니다.</div><div class="line"><span class="dot2">●</span>한인 홈스테이 선택 시 추가 비용이 발생할 수 있습니다.</div><div class="line"><span class="dot2">●</span>학교 학비 인상 시 추가 차액이 발생할 수 있습니다.</div><div class="line"><span class="dot2">●</span>현지 사정에 따라 방과후 수업 일정과 과목이 변경될 수 있습니다.</div><div class="line"><span class="dot2">●</span><b>St. Thomas Aquinas 의료보험료는 별도</b>입니다.</div></div>
+  </section>
+'''
+
+          public_faq = r'''
+  <section>
+    <span class="section-label">FAQ</span><h2>자주 묻는 질문</h2>
+    <div class="faq-list">
+      <details class="faq-item"><summary><span class="q-badge">Q1</span>노스밴쿠버 공립 관리형은 몇 학년부터 가능한가요?</summary><div class="a">현재 TNS 사이트는 2026년 9월 3일 최신 비용표를 기준으로 <b>Grade 9~11</b>을 대상으로 안내합니다.</div></details>
+      <details class="faq-item"><summary><span class="q-badge">Q2</span>방과후 수업은 일주일에 몇 번 하나요?</summary><div class="a"><b>주 3회, 회당 1.5시간</b>입니다. 오후 4시 또는 5시 30분 블록 중 학생 레벨과 필요에 따라 배정하며 한 반 최대 4명으로 운영합니다.</div></details>
+      <details class="faq-item"><summary><span class="q-badge">Q3</span>공립학교는 어디를 선택할 수 있나요?</summary><div class="a">Handsworth, Argyle, Sutherland, Carson Graham을 중심으로 검토합니다. 학교별 좌석과 과목 상황이 달라 실제 배정은 지원 시점에 확인해야 합니다.</div></details>
+      <details class="faq-item"><summary><span class="q-badge">Q4</span>사립 노스밴쿠버 프로그램과 가장 큰 차이는 무엇인가요?</summary><div class="a">공립 과정은 4개 공립학교를 중심으로 검토하며 10개월 <b>CA$71,700</b>입니다. 사립 과정은 St. Thomas Aquinas를 이용하며 <b>CA$82,375</b>입니다. 두 과정 모두 주 3회 방과후 수업과 홈스테이·풀가디언 관리가 포함됩니다.</div></details>
+    </div>
+  </section>
+'''
+
+          private_faq = r'''
+  <section>
+    <span class="section-label">FAQ</span><h2>자주 묻는 질문</h2>
+    <div class="faq-list">
+      <details class="faq-item"><summary><span class="q-badge">Q1</span>가톨릭 신자가 아니어도 입학할 수 있나요?</summary><div class="a">네. 비가톨릭 학생도 재학할 수 있으며 학교의 Christian Education 과목을 이수해야 합니다.</div></details>
+      <details class="faq-item"><summary><span class="q-badge">Q2</span>방과후 수업은 공립 프로그램과 동일한 구조인가요?</summary><div class="a">네. 제공 자료 기준으로 <b>주 3회, 회당 1.5시간</b>이며 레벨테스트 후 소그룹으로 배정됩니다. 다만 실제 과목과 시간표는 현지 사정에 따라 달라질 수 있습니다.</div></details>
+      <details class="faq-item"><summary><span class="q-badge">Q3</span>CA$82,375에 의료보험도 포함되나요?</summary><div class="a">아닙니다. <b>St. Thomas Aquinas 의료보험료는 별도</b>입니다. 학비·캐네디언 홈스테이·주 3회 방과후 수업·풀가디언 비용이 기본 포함 항목입니다.</div></details>
+      <details class="faq-item"><summary><span class="q-badge">Q4</span>공립 노스밴쿠버 프로그램과 비용 차이는 얼마인가요?</summary><div class="a">공립 아카데믹 관리형은 <b>CA$71,700</b>, 사립은 <b>CA$82,375</b>로 현재 안내 금액 기준 CA$10,675 차이입니다.</div></details>
+    </div>
+  </section>
+'''
+
+          def replace_section(text, label, replacement, next_label):
+              pat = rf'  <section>\s*<span class="section-label">{re.escape(label)}</span>[\s\S]*?</section>\s*(?=  <section>\s*<span class="section-label">{re.escape(next_label)}</span>)'
+              new, n = re.subn(pat, replacement + '\n', text, count=1)
+              if n != 1:
+                  raise SystemExit(f'Could not replace section {label} before {next_label}')
+              return new
+
+          # PUBLIC PAGE
+          p = Path('north-vancouver-public.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('Handsworth, Argyle, Sutherland 공립학교와 캐네디언 홈스테이, 에듀스마트 학업 관리를 결합한 2026-27 프로그램. 10개월 CA$71,700.', 'Handsworth·Argyle·Sutherland·Carson Graham 공립학교와 캐네디언 홈스테이, 주 3회 방과후 소그룹 학업관리를 결합한 2026-27 프로그램. 10개월 CA$71,700.')
+          s = s.replace('Handsworth·Argyle·Sutherland + 홈스테이 + 아카데믹 관리, 10개월 CA$71,700.', '공립 4개 학교 + 홈스테이 + 주 3회 방과후 아카데믹 관리, 10개월 CA$71,700.')
+          s = s.replace('학교 선택은 Handsworth Secondary, Argyle Secondary, Sutherland Secondary를 중심으로 검토하며 실제 배정 가능 여부는 지원 시점에 확인합니다.', '학교 선택은 Handsworth, Argyle, Sutherland, Carson Graham을 중심으로 검토하며 실제 배정 가능 여부는 지원 시점에 확인합니다.')
+          s = s.replace('<div class="value">Handsworth · Argyle · Sutherland</div>', '<div class="value">Handsworth · Argyle · Sutherland · Carson Graham</div>')
+          # Insert academic detail before school section.
+          if '<!-- NORTHVAN-ACADEMIC-DETAILS -->' not in s:
+              s = s.replace('  <section>\n    <span class="section-label">SCHOOL OPTIONS</span>', common_academic + '\n  <section>\n    <span class="section-label">SCHOOL OPTIONS</span>', 1)
+          s = replace_section(s, 'SCHOOL OPTIONS', public_school.strip(), 'COST')
+          s = replace_section(s, 'COST', public_cost.strip(), 'FAQ')
+          s = replace_section(s, 'FAQ', public_faq.strip(), 'RELATED')
+          s = s.replace('학교 확인: <a href="https://handsworth.sd44.ca/" target="_blank" rel="noopener">Handsworth Secondary</a> · <a href="https://argyle.sd44.ca/" target="_blank" rel="noopener">Argyle Secondary</a> · <a href="https://sutherland.sd44.ca/" target="_blank" rel="noopener">Sutherland Secondary</a>. 프로그램 대상·비용은 2026년 9월 3일 에듀스마트 최신 비용표 기준입니다.', '프로그램 운영·시간표·학습센터·서비스: 에듀스마트 노스밴쿠버 아카데믹 관리형 안내. 학교 확인: <a href="https://handsworth.sd44.ca/" target="_blank" rel="noopener">Handsworth</a> · <a href="https://argyle.sd44.ca/" target="_blank" rel="noopener">Argyle</a> · <a href="https://sutherland.sd44.ca/" target="_blank" rel="noopener">Sutherland</a> · Carson Graham. 프로그램 대상·비용은 2026년 9월 3일 에듀스마트 최신 비용표 기준입니다.')
+          p.write_text(s, encoding='utf-8')
+
+          # PRIVATE PAGE
+          p = Path('north-vancouver-private.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('캐네디언 홈스테이와 에듀스마트 학업 관리, 2026-27 10개월 CA$82,375.', '캐네디언 홈스테이와 주 3회 방과후 소그룹 학업 관리, 2026-27 10개월 CA$82,375.')
+          s = s.replace('St. Thomas Aquinas Regional Secondary + 홈스테이 + 아카데믹 관리, 10개월 CA$82,375.', 'St. Thomas Aquinas + 홈스테이 + 주 3회 방과후 아카데믹 관리, 10개월 CA$82,375.')
+          if '<!-- NORTHVAN-ACADEMIC-DETAILS -->' not in s:
+              s = s.replace('  <section>\n    <span class="section-label">SCHOOL</span>', common_academic + '\n  <section>\n    <span class="section-label">SCHOOL</span>', 1)
+          s = replace_section(s, 'SCHOOL', private_school.strip(), 'COST')
+          s = replace_section(s, 'COST', private_cost.strip(), 'FAQ')
+          s = replace_section(s, 'FAQ', private_faq.strip(), 'RELATED')
+          s = s.replace('학교 확인: <a href="https://aquinas.org/" target="_blank" rel="noopener">St. Thomas Aquinas Regional Secondary</a> · <a href="https://aquinas.org/academic-program/christian-education/" target="_blank" rel="noopener">Christian Education 안내</a>. 프로그램 대상·비용은 2026년 9월 3일 에듀스마트 최신 비용표 기준입니다.', '프로그램 운영·시간표·학습센터·서비스: 에듀스마트 노스밴쿠버 아카데믹 관리형 안내. 학교 확인: <a href="https://aquinas.org/" target="_blank" rel="noopener">St. Thomas Aquinas Regional Secondary</a> · <a href="https://aquinas.org/academic-program/christian-education/" target="_blank" rel="noopener">Christian Education 안내</a>. 프로그램 대상·비용은 2026년 9월 3일 에듀스마트 최신 비용표 기준입니다.')
+          p.write_text(s, encoding='utf-8')
+
+          # CSS for readable, horizontally scrollable timetable on phones.
+          cssp = Path('style.css')
+          css = cssp.read_text(encoding='utf-8')
+          marker = '/* ---------- NORTH VANCOUVER DETAIL ---------- */'
+          if marker not in css:
+              css += r'''
+
+/* ---------- NORTH VANCOUVER DETAIL ---------- */
+.table-scroll{width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px;}
+.schedule-table{min-width:760px; font-size:11px;}
+.schedule-table th{background:#E7F0DF; color:var(--navy);}
+.schedule-table td{vertical-align:top; line-height:1.45;}
+.schedule-table td b{display:block; color:var(--navy); font-size:11px; margin-bottom:3px;}
+.schedule-table td small{color:var(--muted); font-size:9.5px; line-height:1.45;}
+.schedule-table td.schoolday{font-weight:700; color:var(--navy); background:#F8FAF6; vertical-align:middle;}
+.nv-center-gallery figure img{object-position:center;}
+@media (max-width:480px){
+  .table-scroll::after{content:'← 좌우로 밀어 시간표 확인 →'; display:block; text-align:center; font-size:10px; color:var(--muted); padding-top:6px;}
+  .schedule-table{font-size:10px;}
+}
+'''
+              cssp.write_text(css, encoding='utf-8')
+
+          # Assertions for the important user-supplied details.
+          pub = Path('north-vancouver-public.html').read_text(encoding='utf-8')
+          prv = Path('north-vancouver-private.html').read_text(encoding='utf-8')
+          assert '주 3회 방과후 수업' in pub and '주 3회 방과후 수업' in prv
+          assert 'Evidence-based Reading & Writing' in pub and 'Digital SAT Reading & Writing' in prv
+          assert 'Carson Graham Secondary' in pub
+          assert 'CA$71,700' in pub
+          assert 'CA$82,375' in prv and 'CA$83,375' not in prv
+          assert '의료보험비' in pub and 'St. Thomas Aquinas 의료보험료는 별도' in prv
+          assert 'Daniel Kim' in pub and 'Daniel Kim' in prv
+          print('North Vancouver detail expansion assertions passed.')
+          PY
+
+          git config user.name "TNS Site Manager"
+          git config user.email "actions@users.noreply.github.com"
+          git add '*.html' style.css
+          git diff --cached --quiet && exit 0
+          git commit -m "Expand North Vancouver academic management details"
+          git push origin HEAD:seo-aeo-geo-polish-20260830
