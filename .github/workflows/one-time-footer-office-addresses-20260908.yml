@@ -2,56 +2,50 @@ name: One-time footer office addresses
 
 on:
   push:
-    branches: [seo-aeo-geo-polish-20260830]
-    paths: ['.github/workflows/one-time-footer-office-addresses-20260908.yml']
+    branches:
+      - seo-aeo-geo-polish-20260830
+    paths:
+      - .github/workflows/one-time-footer-office-addresses-20260908.yml
 
 permissions:
   contents: write
 
 jobs:
-  update:
+  update-footer:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: seo-aeo-geo-polish-20260830
-      - name: Update all HTML footers with Seoul and Busan office details
+      - name: Update footers
+        shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
+          import base64
 
-          new_footer = '''<footer>
-    <div class="ft-brand">TNS유학 · ㈜티앤에스월드와이드</div>
-    <div class="ft-contact">
-      <b>서울 본사</b><br>
-      서울시 강남구 테헤란로5길 7 KG타워 B1 (06134) · ☎ <a href="tel:0232881733">02-3288-1733~1735</a><br><br>
-      <b>부산 지사</b><br>
-      부산 부산진구 중앙대로 694 쥬디스태화 9층 37호 (47295) · ☎ <a href="tel:01050241733">010-5024-1733</a>
-    </div>'''
-
+          encoded = 'PGZvb3Rlcj4KICAgIDxkaXYgY2xhc3M9ImZ0LWJyYW5kIj5UTlPsnKDtlZkgwrcg44ic7Yuw7JWk7JeQ7Iqk7JuU65Oc7JmA7J2065OcPC9kaXY+CiAgICA8ZGl2IGNsYXNzPSJmdC1jb250YWN0Ij4KICAgICAgPGI+7ISc7Jq4IOuzuOyCrDwvYj48YnI+CiAgICAgIOyEnOyauOyLnCDqsJXrgqjqtawg7YWM7Zek656A66GcNeq4uCA3IEtH7YOA7JuMIEIxICgwNjEzNCkgwrcg4piOIDxhIGhyZWY9InRlbDowMjMyODgxNzMzIj4wMi0zMjg4LTE3MzN+MTczNTwvYT48YnI+PGJyPgogICAgICA8Yj7rtoDsgrAg7KeA7IKsPC9iPjxicj4KICAgICAg67aA7IKwIOu2gOyCsOynhOq1rCDspJHslZnrjIDroZwgNjk0IOylrOuUlOyKpO2DnO2ZlCA57Li1IDM37Zi4ICg0NzI5NSkgwrcg4piOIDxhIGhyZWY9InRlbDowMTA1MDI0MTczMyI+MDEwLTUwMjQtMTczMzwvYT4KICAgIDwvZGl2PgogICAg'
+          new_footer = base64.b64decode(encoded).decode('utf-8')
           changed = []
-          for p in Path('.').glob('*.html'):
-              s = p.read_text(encoding='utf-8')
-              start = s.find('<footer>')
-              if start == -1:
+
+          for path in Path('.').glob('*.html'):
+              text = path.read_text(encoding='utf-8')
+              start = text.find('<footer>')
+              tags = text.find('<div class="ft-tags">', start)
+              if start < 0 or tags < 0:
                   continue
-              tags = s.find('<div class="ft-tags">', start)
-              if tags == -1:
-                  continue
-              replacement = new_footer + '\n    '
-              s2 = s[:start] + replacement + s[tags:]
-              if s2 != s:
-                  p.write_text(s2, encoding='utf-8')
-                  changed.append(p.name)
+              updated = text[:start] + new_footer + text[tags:]
+              if updated != text:
+                  path.write_text(updated, encoding='utf-8')
+                  changed.append(path.name)
 
           if not changed:
-              raise SystemExit('No footer blocks changed')
-          print('Updated:', ', '.join(changed))
+              raise SystemExit('No HTML footer was updated')
+          print('Updated', len(changed), 'files')
           PY
-          git config user.name "tnsuhak"
-          git config user.email "tnsuhak@gmail.com"
-          git add *.html
+          git config user.name tnsuhak
+          git config user.email tnsuhak@gmail.com
+          git add '*.html'
           git rm .github/workflows/one-time-footer-office-addresses-20260908.yml
-          git commit -m "Show Seoul and Busan office addresses in footer"
+          git commit -m 'Show Seoul and Busan addresses in footer'
           git push origin HEAD:seo-aeo-geo-polish-20260830
