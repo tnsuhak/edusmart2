@@ -574,9 +574,9 @@ h2 small{
 /* ---------- CTA 2 + 3 ROW LAYOUT ---------- */
 .cta-btns-top{grid-template-columns:repeat(2,1fr); margin-bottom:10px;}
 .cta-btns-bottom{grid-template-columns:repeat(3,1fr);}
-.cta-btns a.openchat{background:#FFF4B8; border-color:#E7CF58;}
-.cta-btns a.openchat .lb{color:#3C2D12;}
-.cta-btns a.openchat .sb{color:#74633D;}
+.cta-btns a.openchat{background:#FEE500; border-color:#F2D900;}
+.cta-btns a.openchat .lb{color:#3C1E1E;}
+.cta-btns a.openchat .sb{color:#6B5A38;}
 @media (max-width:480px){
   .cta-btns-top{grid-template-columns:repeat(2,1fr);}
   .cta-btns-bottom{grid-template-columns:repeat(3,1fr);}
