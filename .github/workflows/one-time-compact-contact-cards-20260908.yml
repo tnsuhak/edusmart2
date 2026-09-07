@@ -1,0 +1,61 @@
+name: One-time compact contact cards
+
+on:
+  push:
+    branches:
+      - seo-aeo-geo-polish-20260830
+    paths:
+      - .github/workflows/one-time-compact-contact-cards-20260908.yml
+
+permissions:
+  contents: write
+
+jobs:
+  compact-contact-cards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo-aeo-geo-polish-20260830
+      - name: Compact contact CTA cards
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('style.css')
+          s = p.read_text(encoding='utf-8')
+          replacements = {
+            'padding:22px 20px;\n  text-align:center;': 'padding:17px 16px;\n  text-align:center;',
+            'font-size:16px; font-weight:700; color:var(--navy);': 'font-size:15px; font-weight:700; color:var(--navy);',
+            '.cta-box .cta-sub{font-size:12px; color:var(--muted); margin-bottom:16px;}': '.cta-box .cta-sub{font-size:11px; color:var(--muted); margin-bottom:12px;}',
+            '.cta-btns{display:grid; grid-template-columns:repeat(4,1fr); gap:10px;}': '.cta-btns{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}',
+            'gap:6px;\n  text-decoration:none;\n  border-radius:12px;\n  padding:16px 10px;': 'gap:4px;\n  text-decoration:none;\n  border-radius:10px;\n  padding:11px 8px;',
+            '.cta-btns a .ico{font-size:22px; line-height:1;}': '.cta-btns a .ico{font-size:19px; line-height:1;}',
+            '.cta-btns a .lb{font-size:12.5px; font-weight:700; color:var(--navy);}': '.cta-btns a .lb{font-size:11.5px; font-weight:700; color:var(--navy);}',
+            '.cta-btns a .sb{font-size:10.5px; color:var(--muted);}': '.cta-btns a .sb{font-size:9.5px; color:var(--muted);}',
+            '.cta-btns a{flex-direction:row; justify-content:flex-start; gap:8px; padding:12px 10px;}': '.cta-btns a{flex-direction:row; justify-content:flex-start; gap:6px; padding:9px 8px;}',
+            '.cta-btns a .ico{font-size:20px;}': '.cta-btns a .ico{font-size:18px;}',
+            '.cta-btns a .lb{font-size:11.5px;}': '.cta-btns a .lb{font-size:10.8px;}',
+            '.cta-btns a .sb{font-size:9.5px;}': '.cta-btns a .sb{font-size:8.8px;}',
+            '.cta-btns-top{grid-template-columns:repeat(2,1fr); margin-bottom:10px;}': '.cta-btns-top{grid-template-columns:repeat(2,1fr); margin-bottom:8px;}',
+            '.cta-btns-bottom a{flex-direction:column; justify-content:center; gap:6px; padding:12px 6px;}': '.cta-btns-bottom a{flex-direction:column; justify-content:center; gap:4px; padding:9px 4px;}',
+            '.cta-btns-bottom a .ico{font-size:19px;}': '.cta-btns-bottom a .ico{font-size:17px;}',
+            '.cta-btns-bottom a .lb{font-size:10.5px; line-height:1.35;}': '.cta-btns-bottom a .lb{font-size:9.8px; line-height:1.3;}',
+            '.cta-btns-bottom a .sb{font-size:8.8px; line-height:1.35;}': '.cta-btns-bottom a .sb{font-size:8.2px; line-height:1.3;}'
+          }
+          changed = 0
+          for old, new in replacements.items():
+              if old in s:
+                  s = s.replace(old, new, 1)
+                  changed += 1
+          if changed < 10:
+              raise SystemExit(f'Only {changed} expected CTA replacements applied')
+          p.write_text(s, encoding='utf-8')
+          print('Applied', changed, 'CTA size reductions')
+          PY
+          git config user.name tnsuhak
+          git config user.email tnsuhak@gmail.com
+          git add style.css
+          git rm .github/workflows/one-time-compact-contact-cards-20260908.yml
+          git commit -m 'Compact consultation and contact cards'
+          git push origin HEAD:seo-aeo-geo-polish-20260830
