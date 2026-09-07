@@ -1,0 +1,100 @@
+name: One-time latest Edusmart pricing 2026-27
+
+on:
+  push:
+    branches:
+      - seo-aeo-geo-polish-20260830
+    paths:
+      - '.github/workflows/one-time-latest-pricing-20260903.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-pricing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply Sep 3 latest Edusmart pricing
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          html_files = sorted(Path('.').glob('*.html'))
+
+          # Latest-source freshness date across indexable site pages.
+          for p in html_files:
+              s = p.read_text(encoding='utf-8')
+              s = s.replace('정보 업데이트 2026.08.30', '정보 업데이트 2026.09.03')
+              s = s.replace('"dateModified": "2026-08-30"', '"dateModified": "2026-09-03"')
+              s = s.replace('최종 확인: 2026년 8월 29일.', '최종 확인: 2026년 9월 3일.')
+              # Chilliwack latest Edusmart sheet now lists G9-G11.
+              s = re.sub(r'(<a href="guardian-chilliwack\.html"[^>]*>칠리왁 공립교육청<small>)G8~11( · 영어 중심 지역</small>)', r'\1G9~11\2', s)
+              p.write_text(s, encoding='utf-8')
+
+          # Homepage summary/range/table.
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('CA$37,450~108,400', 'CA$38,250~108,400')
+          s = s.replace('CA$37,450~48,775', 'CA$38,250~48,775')
+          s = s.replace('37,450<span class="krw">약 3,745만 원</span>', '38,450<span class="krw">약 3,845만 원</span>')
+          # Only the Chilliwack programme row changes grade eligibility.
+          s = re.sub(r'(<tr>\s*<td class="school"><a href="guardian-chilliwack\.html".*?</tr>)', lambda m: m.group(1).replace('G8~11','G9~11'), s, flags=re.S)
+          p.write_text(s, encoding='utf-8')
+
+          # Guardian overview.
+          p = Path('guardian.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('CA$37,450~48,775', 'CA$38,250~48,775')
+          s = s.replace('1년 총비용 $29,450 + 풀가디언 $8,000', '1년 총비용 $29,450 + 풀가디언 $9,000')
+          s = s.replace('CA$37,450<span class="krw">약 3,745만 원</span>', 'CA$38,450<span class="krw">약 3,845만 원</span>')
+          s = re.sub(r'(<tr>\s*<td class="school"><a href="guardian-chilliwack\.html".*?</tr>)', lambda m: m.group(1).replace('G8~11','G9~11'), s, flags=re.S)
+          p.write_text(s, encoding='utf-8')
+
+          # Managed-vs-guardian overview range.
+          p = Path('supervised.html')
+          s = p.read_text(encoding='utf-8').replace('CA$37,450~48,775', 'CA$38,250~48,775')
+          p.write_text(s, encoding='utf-8')
+
+          # Chilliwack detailed page: latest Edusmart package total and G9-G11.
+          p = Path('guardian-chilliwack.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('칠리왁 공립교육청 가디언형 유학 (Grade 8~11)', '칠리왁 공립교육청 가디언형 유학 (Grade 9~11)')
+          s = s.replace('가디언형 유학(Grade 8~11)', '가디언형 유학(Grade 9~11)')
+          s = s.replace('가디언형 (G8~11)', '가디언형 (G9~11)')
+          s = s.replace('Grade 8~11 대상 공립교육청', 'Grade 9~11 대상 공립교육청')
+          s = s.replace('<span>👤 Grade 8~11</span>', '<span>👤 Grade 9~11</span>')
+          s = s.replace('<div class="value">Grade 8~11</div>', '<div class="value">Grade 9~11</div>')
+          s = s.replace('CA$29,450 + 풀가디언 $8,000', 'CA$29,450 + 풀가디언 $9,000')
+          s = s.replace('+CA$8,000 (10개월)', '+CA$9,000 (10개월)')
+          s = s.replace('CA$37,450', 'CA$38,450')
+          s = s.replace('$37,450', '$38,450')
+          s = s.replace('3,745만 원', '3,845만 원')
+          s = s.replace('$8,000', '$9,000')
+          s = s.replace('2026.08 환율 기준', '2026.09 환율 기준')
+          p.write_text(s, encoding='utf-8')
+
+          # Quick Finder logic: Chilliwack is now G9-G11 and CA$38,450.
+          p = Path('nav.js')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace("{name:'칠리왁 공립교육청 가디언형', minGrade:8, maxGrade:11, minCost:37450, cost:'CA$37,450'", "{name:'칠리왁 공립교육청 가디언형', minGrade:9, maxGrade:11, minCost:38450, cost:'CA$38,450'")
+          p.write_text(s, encoding='utf-8')
+
+          # Assertions: no stale Chilliwack package price should remain.
+          combined = '\n'.join(p.read_text(encoding='utf-8', errors='ignore') for p in list(Path('.').glob('*.html')) + [Path('nav.js')])
+          assert '37,450' not in combined, 'stale CA$37,450 remains somewhere in site'
+          assert "minGrade:9, maxGrade:11, minCost:38450, cost:'CA$38,450'" in Path('nav.js').read_text(encoding='utf-8')
+          assert 'CA$29,450 + 풀가디언 $9,000' in Path('guardian-chilliwack.html').read_text(encoding='utf-8')
+          print('Pricing update assertions passed.')
+          PY
+
+          git config user.name "TNS Site Manager"
+          git config user.email "actions@users.noreply.github.com"
+          git add '*.html' nav.js
+          if git diff --cached --quiet; then
+            echo "No pricing changes needed"
+          else
+            git commit -m "Update Edusmart Sep 2026 latest pricing"
+            git push
+          fi
