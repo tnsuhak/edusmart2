@@ -27,8 +27,8 @@
     {name:'코퀴틀람 주니어 골프', minGrade:6, maxGrade:11, minCost:101700, cost:'CA$101,700~108,400', care:2, href:'golf.html', reason:'골프 훈련과 캐나다 학교생활을 함께 계획하는 학생을 위한 특화 과정', special:'golf'},
     {name:'랭리 대학 입시 관리형', minGrade:8, maxGrade:11, minCost:58500, cost:'CA$58,500', care:2, href:'langley.html', reason:'홈스테이 생활과 대학 입시 지원을 균형 있게 원하는 학생에게 적합'},
     {name:'버나비 아카데믹 관리형', minGrade:8, maxGrade:11, minCost:58500, cost:'CA$58,500', care:2, href:'burnaby.html', reason:'도심 접근성과 아카데믹 프로그램 상담을 함께 원하는 학생에게 적합'},
-    {name:'노스밴쿠버 공립 아카데믹 관리형', minGrade:9, maxGrade:11, minCost:71700, cost:'CA$71,700', care:2, href:'north-vancouver-public.html', reason:'노스밴쿠버 공립학교와 홈스테이 생활, 아카데믹 관리를 함께 원하는 학생에게 적합'},
-    {name:'노스밴쿠버 사립 아카데믹 관리형', minGrade:9, maxGrade:11, minCost:82375, cost:'CA$82,375', care:2, href:'north-vancouver-private.html', reason:'가톨릭 사립학교 환경과 홈스테이, 아카데믹 관리를 함께 원하는 학생에게 적합'},
+    {name:'노스밴쿠버 공립 아카데믹 관리형', minGrade:9, maxGrade:11, minCost:71700, cost:'CA$71,700', care:[2,3], href:'north-vancouver-public.html', reason:'노스밴쿠버 공립학교와 홈스테이 생활, 아카데믹 관리를 함께 원하는 학생에게 적합'},
+    {name:'노스밴쿠버 사립 아카데믹 관리형', minGrade:9, maxGrade:11, minCost:82375, cost:'CA$82,375', care:[2,3], href:'north-vancouver-private.html', reason:'가톨릭 사립학교 환경과 홈스테이, 아카데믹 관리를 함께 원하는 학생에게 적합'},
     {name:'랭리 교육청 가디언형', minGrade:8, maxGrade:11, minCost:38250, cost:'CA$38,250', care:1, href:'guardian-metro.html', reason:'자기주도 학습이 가능하고 비용 효율을 중시하는 학생에게 적합'},
     {name:'칠리왁 공립교육청 가디언형', minGrade:9, maxGrade:11, minCost:38450, cost:'CA$38,450', care:1, href:'guardian-chilliwack.html', reason:'영어 중심 생활환경과 비교적 낮은 비용을 우선하는 학생에게 적합'},
     {name:'버나비 교육청 가디언형', minGrade:8, maxGrade:11, minCost:42425, cost:'CA$42,425', care:1, href:'guardian-metro.html', reason:'자기관리 능력이 있고 도심 접근성을 중시하는 학생에게 적합'},
@@ -203,6 +203,10 @@
     });
   }
 
+  function programMatchesCare(program, care) {
+    return Array.isArray(program.care) ? program.care.indexOf(care) !== -1 : program.care === care;
+  }
+
   function syncCareOptions() {
     var grade = Number(gradeSelect.value);
     var budget = Number(budgetSelect.value);
@@ -224,7 +228,7 @@
     careOptions.forEach(function (option) {
       var care = Number(option.value);
       option.disabled = !candidates.some(function (program) {
-        return program.care === care;
+        return programMatchesCare(program, care);
       });
     });
 
@@ -301,7 +305,7 @@
     }
 
     var eligible = generalProgramsForGrade(grade).filter(function (program) {
-      return program.minCost <= budget && program.care === care;
+      return program.minCost <= budget && programMatchesCare(program, care);
     });
 
     result.hidden = false;
