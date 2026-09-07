@@ -626,3 +626,7 @@ footer .disclaimer a{color:inherit; text-decoration:underline; text-underline-of
   color:#EDEFF3 !important;
   -webkit-text-fill-color:#EDEFF3 !important;
 }
+
+/* Top consultation cards: slightly larger primary labels */
+.cta-btns-top a .lb{font-size:13px;}
+@media (max-width:480px){.cta-btns-top a .lb{font-size:12.2px;}}
