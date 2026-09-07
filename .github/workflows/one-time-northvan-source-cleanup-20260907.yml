@@ -1,0 +1,39 @@
+name: One-time North Vancouver source cleanup
+
+on:
+  push:
+    branches: [seo-aeo-geo-polish-20260830]
+    paths: ['.github/workflows/one-time-northvan-source-cleanup-20260907.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo-aeo-geo-polish-20260830
+      - name: Remove visible source sections and private notice
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          for name in ['north-vancouver-public.html', 'north-vancouver-private.html']:
+              p = Path(name)
+              s = p.read_text(encoding='utf-8')
+              # Remove the visible source section only.
+              s = re.sub(r'\n\s*<section><span class="section-label">자료 출처</span>.*?</section>', '', s, flags=re.S)
+              if name == 'north-vancouver-private.html':
+                  s = s.replace('\n    <div class="tip-box">💡 <b>현재 TNS 사이트의 프로그램 대상과 가격은 9월 3일 최신 비용표를 우선 적용합니다.</b> 따라서 G9~11, 10개월 CA$82,375로 안내합니다.</div>', '')
+              p.write_text(s, encoding='utf-8')
+          PY
+          git config user.name "tnsuhak"
+          git config user.email "tnsuhak@gmail.com"
+          git add north-vancouver-public.html north-vancouver-private.html
+          if ! git diff --cached --quiet; then
+            git commit -m "Remove North Vancouver visible source notes"
+            git push origin HEAD:seo-aeo-geo-polish-20260830
+          fi
