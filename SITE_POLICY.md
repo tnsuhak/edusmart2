@@ -21,7 +21,7 @@
 
 ## Visible update-date policy
 
-- On public subpages, the update badge must display **only** `정보 업데이트 YYYY.MM.DD`.
+- On **all public pages, including the homepage and every subpage**, the update badge must display **only** `정보 업데이트 YYYY.MM.DD`.
 - Do not append source names, academic-year labels, cost-table notes, operating-guide notes, or phrases such as `~ 기준` after the visible update date.
 - Keep detailed basis/source/version information internal in GitHub, working notes, or central management configuration rather than in the public update badge.
 - When content is materially updated, change the visible date to the actual update date while preserving the date-only format.
