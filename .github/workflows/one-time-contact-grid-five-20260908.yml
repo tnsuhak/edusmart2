@@ -1,0 +1,118 @@
+name: One-time contact grid five
+
+on:
+  push:
+    branches:
+      - seo-aeo-geo-polish-20260830
+    paths:
+      - .github/workflows/one-time-contact-grid-five-20260908.yml
+
+permissions:
+  contents: write
+
+jobs:
+  update-contact-grid:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo-aeo-geo-polish-20260830
+      - name: Update CTA layout on all pages
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          top = '''      <div class="cta-btns cta-btns-top">
+        <a class="kakao" href="https://open.kakao.com/o/slehLvKi" target="_blank" rel="noopener">
+          <span class="ico">💬</span>
+          <span class="txt-wrap">
+            <span class="lb">카톡 상담</span><br>
+            <span class="sb">1:1 실시간 문의</span>
+          </span>
+        </a>
+        <a class="phone" href="tel:01051500105" aria-label="TNS유학 전화상담 010-5150-0105">
+          <span class="ico">📞</span>
+          <span class="txt-wrap">
+            <span class="lb">전화 상담</span><br>
+            <span class="sb">010-5150-0105</span>
+          </span>
+        </a>
+      </div>
+      <div class="cta-btns cta-btns-bottom">
+        <a class="naver" href="https://cafe.naver.com/tnsuhak.cafe" target="_blank" rel="noopener">
+          <span class="ico">🇳</span>
+          <span class="txt-wrap">
+            <span class="lb">네이버 유학카페</span><br>
+            <span class="sb">회원 43,000명</span>
+          </span>
+        </a>
+        <a class="openchat" href="https://open.kakao.com/o/gotTB6re" target="_blank" rel="noopener">
+          <span class="ico">💬</span>
+          <span class="txt-wrap">
+            <span class="lb">캐나다 오픈채팅방</span><br>
+            <span class="sb">참가자 1,250명</span>
+          </span>
+        </a>
+        <a class="home" href="https://www.tnsuhak.com/" target="_blank" rel="noopener">
+          <span class="ico">🏠</span>
+          <span class="txt-wrap">
+            <span class="lb">TNS유학 홈페이지</span><br>
+            <span class="sb">전체 프로그램 보기</span>
+          </span>
+        </a>
+      </div>'''
+
+          changed = []
+          for path in Path('.').glob('*.html'):
+              s = path.read_text(encoding='utf-8')
+              start = s.find('      <div class="cta-btns">')
+              if start < 0:
+                  continue
+              outer_close = s.find('\n    </div>\n  </section>\n\n  <footer>', start)
+              if outer_close < 0:
+                  continue
+              updated = s[:start] + top + s[outer_close:]
+              if updated != s:
+                  path.write_text(updated, encoding='utf-8')
+                  changed.append(path.name)
+
+          if not changed:
+              raise SystemExit('No CTA blocks were updated')
+
+          css_path = Path('style.css')
+          css = css_path.read_text(encoding='utf-8')
+          marker = '/* ---------- FOOTER ---------- */'
+          extra = '''
+/* ---------- CTA 2 + 3 ROW LAYOUT ---------- */
+.cta-btns-top{grid-template-columns:repeat(2,1fr); margin-bottom:10px;}
+.cta-btns-bottom{grid-template-columns:repeat(3,1fr);}
+.cta-btns a.openchat{background:#FFF4B8; border-color:#E7CF58;}
+.cta-btns a.openchat .lb{color:#3C2D12;}
+.cta-btns a.openchat .sb{color:#74633D;}
+@media (max-width:480px){
+  .cta-btns-top{grid-template-columns:repeat(2,1fr);}
+  .cta-btns-bottom{grid-template-columns:repeat(3,1fr);}
+  .cta-btns-bottom a{flex-direction:column; justify-content:center; gap:6px; padding:12px 6px;}
+  .cta-btns-bottom a .txt-wrap{text-align:center;}
+  .cta-btns-bottom a .ico{font-size:19px;}
+  .cta-btns-bottom a .lb{font-size:10.5px; line-height:1.35;}
+  .cta-btns-bottom a .sb{font-size:8.8px; line-height:1.35;}
+}
+
+'''
+          if 'CTA 2 + 3 ROW LAYOUT' not in css:
+              if marker in css:
+                  css = css.replace(marker, extra + marker)
+              else:
+                  css += '\n' + extra
+              css_path.write_text(css, encoding='utf-8')
+
+          print('Updated CTA on', len(changed), 'HTML files')
+          PY
+          git config user.name tnsuhak
+          git config user.email tnsuhak@gmail.com
+          git add '*.html' style.css
+          git rm .github/workflows/one-time-contact-grid-five-20260908.yml
+          git commit -m 'Arrange contact buttons in two and three rows'
+          git push origin HEAD:seo-aeo-geo-polish-20260830
