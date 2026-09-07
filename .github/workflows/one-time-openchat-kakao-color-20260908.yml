@@ -20,20 +20,7 @@ jobs:
       - name: Match openchat card to Kakao consultation color
         shell: bash
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('style.css')
-          s = p.read_text(encoding='utf-8')
-          old = '''.cta-btns a.openchat{background:#FFF4B8; border-color:#E7CF58;}
-.cta-btns a.openchat .lb{color:#3C2D12;}
-.cta-btns a.openchat .sb{color:#74633D;}'''
-          new = '''.cta-btns a.openchat{background:#FEE500; border-color:#F2D900;}
-.cta-btns a.openchat .lb{color:#3C1E1E;}
-.cta-btns a.openchat .sb{color:#6B5A38;}'''
-          if old not in s:
-              raise SystemExit('Openchat color block not found')
-          p.write_text(s.replace(old,new,1), encoding='utf-8')
-          PY
+          python3 -c "from pathlib import Path; p=Path('style.css'); s=p.read_text(encoding='utf-8'); s=s.replace('#FFF4B8','#FEE500').replace('#E7CF58','#F2D900').replace('#3C2D12','#3C1E1E').replace('#74633D','#6B5A38'); p.write_text(s,encoding='utf-8')"
           git config user.name tnsuhak
           git config user.email tnsuhak@gmail.com
           git add style.css
