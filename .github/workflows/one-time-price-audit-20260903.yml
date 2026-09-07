@@ -1,0 +1,34 @@
+name: One-time Edusmart price audit
+
+on:
+  push:
+    branches:
+      - seo-aeo-geo-polish-20260830
+    paths:
+      - '.github/workflows/one-time-price-audit-20260903.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print all visible price-like lines
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          files = sorted(list(Path('.').glob('*.html')) + list(Path('.').glob('*.js')))
+          pats = [re.compile(r'CA\$'), re.compile(r'\b\d{2,3},\d{3}\b'), re.compile(r'\b\d{3,6}불\b'), re.compile(r'만원'), re.compile(r'캐나다달러')]
+          for p in files:
+              text = p.read_text(encoding='utf-8', errors='ignore')
+              found = False
+              for i, line in enumerate(text.splitlines(), 1):
+                  if any(rx.search(line) for rx in pats):
+                      if not found:
+                          print(f'\n===== {p} =====')
+                          found = True
+                      print(f'{i}: {line.strip()}')
+          PY
