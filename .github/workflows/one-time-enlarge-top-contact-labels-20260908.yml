@@ -20,14 +20,7 @@ jobs:
       - name: Enlarge Kakao and phone consultation labels only
         shell: bash
         run: |
-          cat >> style.css <<'EOF'
-
-/* Top consultation cards: keep compact cards, slightly larger primary labels */
-.cta-btns-top a .lb{font-size:13px;}
-@media (max-width:480px){
-  .cta-btns-top a .lb{font-size:12.2px;}
-}
-EOF
+          printf '%s\n' '' '/* Top consultation cards: slightly larger primary labels */' '.cta-btns-top a .lb{font-size:13px;}' '@media (max-width:480px){.cta-btns-top a .lb{font-size:12.2px;}}' >> style.css
           git config user.name tnsuhak
           git config user.email tnsuhak@gmail.com
           git add style.css
