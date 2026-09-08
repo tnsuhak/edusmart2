@@ -1,6 +1,11 @@
 (function(){
   var panel=document.querySelector('.gnav-panel');
   if(panel){
+    var home=panel.querySelector('a[href="index.html"]');
+    if(home && home.innerHTML.indexOf('🗂️')===-1){
+      home.innerHTML='🗂️ '+home.innerHTML;
+    }
+
     var link=panel.querySelector('a[href="student-life-videos.html"]');
     if(!link){
       link=document.createElement('a');
