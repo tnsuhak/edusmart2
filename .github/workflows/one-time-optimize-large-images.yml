@@ -1,0 +1,116 @@
+name: One-time optimize large images
+
+on:
+  push:
+    branches:
+      - seo-aeo-geo-polish-20260830
+    paths:
+      - .github/workflows/one-time-optimize-large-images.yml
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo-aeo-geo-polish-20260830
+      - name: Install Pillow
+        run: python3 -m pip install --quiet pillow
+      - name: Optimize referenced large images and add dimensions
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageOps
+          import re
+
+          targets = [
+              Path('images/dorm3.jpg'),
+              Path('images/edusmart-6c471e3b1357.jpg'),
+              Path('images/edusmart-6f4ee9cd66b9.png'),
+              Path('images/edusmart-de77aeddd4cc.jpg'),
+              Path('images/edusmart-aa9c2f3a3296.png'),
+              Path('images/edusmart-af632a333825.jpg'),
+          ]
+
+          mapping = {}
+          for src in targets:
+              if not src.exists():
+                  print('skip missing', src)
+                  continue
+              before = src.stat().st_size
+              with Image.open(src) as raw:
+                  im = ImageOps.exif_transpose(raw)
+                  if im.width > 1600:
+                      nh = round(im.height * 1600 / im.width)
+                      im = im.resize((1600, nh), Image.Resampling.LANCZOS)
+                  if im.mode not in ('RGB','RGBA'):
+                      im = im.convert('RGBA' if 'A' in im.getbands() else 'RGB')
+                  out = src.with_suffix('.webp')
+                  quality = 88 if src.suffix.lower() == '.png' else 84
+                  im.save(out, 'WEBP', quality=quality, method=6)
+              after = out.stat().st_size
+              mapping[src.as_posix()] = out.as_posix()
+              src.unlink()
+              print(f'{src} -> {out}: {before/1024:.0f} KB -> {after/1024:.0f} KB')
+
+          # Replace old image paths in all HTML files.
+          for p in Path('.').glob('*.html'):
+              s = p.read_text(encoding='utf-8')
+              s2 = s
+              for old, new in mapping.items():
+                  s2 = s2.replace(old, new)
+              if s2 != s:
+                  p.write_text(s2, encoding='utf-8')
+
+          # Add explicit intrinsic dimensions to all local raster <img> tags.
+          cache = {}
+          img_re = re.compile(r'<img\b[^>]*>', re.I)
+          src_re = re.compile(r'\bsrc=["\']([^"\']+)["\']', re.I)
+          width_re = re.compile(r'\bwidth=["\'][^"\']+["\']', re.I)
+          height_re = re.compile(r'\bheight=["\'][^"\']+["\']', re.I)
+
+          def dimensions(path):
+              if path not in cache:
+                  with Image.open(path) as im:
+                      cache[path] = im.size
+              return cache[path]
+
+          def update_tag(tag, html_path):
+              m = src_re.search(tag)
+              if not m:
+                  return tag
+              src = m.group(1).split('?',1)[0].split('#',1)[0]
+              if not src or src.startswith(('http://','https://','//','data:','/')):
+                  return tag
+              target = html_path.parent / src
+              if not target.exists() or target.suffix.lower() not in ('.jpg','.jpeg','.png','.webp','.avif'):
+                  return tag
+              w, h = dimensions(target)
+              attrs = ''
+              if not width_re.search(tag):
+                  attrs += f' width="{w}"'
+              if not height_re.search(tag):
+                  attrs += f' height="{h}"'
+              if not attrs:
+                  return tag
+              if tag.endswith('/>'):
+                  return tag[:-2] + attrs + '/>'
+              return tag[:-1] + attrs + '>'
+
+          for p in Path('.').glob('*.html'):
+              s = p.read_text(encoding='utf-8')
+              s2 = img_re.sub(lambda m: update_tag(m.group(0), p), s)
+              if s2 != s:
+                  p.write_text(s2, encoding='utf-8')
+          PY
+
+          git config user.name tnsuhak
+          git config user.email tnsuhak@gmail.com
+          git add -A
+          git rm .github/workflows/one-time-optimize-large-images.yml
+          git commit -m 'Optimize large site images before production'
+          git push origin HEAD:seo-aeo-geo-polish-20260830
