@@ -44,6 +44,22 @@
     document.head.appendChild(style);
   }
 
+  /* 모든 페이지 하단 연락처를 동일한 2줄 형식으로 통일 */
+  var footerContact=document.querySelector('footer .ft-contact');
+  if(footerContact){
+    footerContact.innerHTML=
+      '<div class="ft-contact-row"><b>서울 본사:</b> 서울시 강남구 테헤란로5길 7 KG타워 B1 (06134) · ☎ <a href="tel:0232881733">02-3288-1733~1735</a></div>' +
+      '<div class="ft-contact-row"><b>부산 지사:</b> 부산 부산진구 중앙대로 694 쥬디스태화 9층 37호 (47295) · ☎ <a href="tel:01050241733">010-5024-1733</a></div>';
+
+    var footerStyle=document.createElement('style');
+    footerStyle.textContent=
+      'footer .ft-contact .ft-contact-row{display:block;margin:0;line-height:1.9;}' +
+      'footer .ft-contact .ft-contact-row+ .ft-contact-row{margin-top:4px;}' +
+      '@media(min-width:900px){footer .ft-contact .ft-contact-row{white-space:nowrap;}}' +
+      '@media(max-width:899px){footer .ft-contact .ft-contact-row{white-space:normal;}}';
+    document.head.appendChild(footerStyle);
+  }
+
   var core=document.createElement('script');
   core.src='nav-core.js';
   core.async=false;
