@@ -1,0 +1,97 @@
+name: One-time final pre-production polish
+
+on:
+  push:
+    branches:
+      - seo-aeo-geo-polish-20260830
+    paths:
+      - .github/workflows/one-time-final-preprod-polish.yml
+
+permissions:
+  contents: write
+
+jobs:
+  polish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo-aeo-geo-polish-20260830
+      - name: Install Pillow
+        run: python3 -m pip install --quiet pillow
+      - name: Recompress two remaining large images
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageOps
+
+          for p in [Path('images/dorm3.webp'), Path('images/edusmart-6c471e3b1357.webp')]:
+              if not p.exists():
+                  raise SystemExit(f'missing {p}')
+              before = p.stat().st_size
+              with Image.open(p) as raw:
+                  im = ImageOps.exif_transpose(raw).convert('RGB')
+                  if im.width > 1440:
+                      nh = round(im.height * 1440 / im.width)
+                      im = im.resize((1440, nh), Image.Resampling.LANCZOS)
+                  im.save(p, 'WEBP', quality=80, method=6)
+              after = p.stat().st_size
+              print(f'{p}: {before/1024:.0f} KB -> {after/1024:.0f} KB')
+          PY
+
+      - name: Audit external links for hard failures
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          from urllib.parse import urlparse
+          from urllib.request import Request, build_opener, HTTPRedirectHandler
+          from urllib.error import HTTPError, URLError
+          import ssl, sys
+
+          urls = set()
+          class P(HTMLParser):
+              def handle_starttag(self, tag, attrs):
+                  d = dict(attrs)
+                  if tag == 'a':
+                      h = d.get('href','').strip()
+                      if h.startswith(('http://','https://')):
+                          urls.add(h)
+          for p in Path('.').glob('*.html'):
+              x=P(); x.feed(p.read_text(encoding='utf-8'))
+
+          hard=[]; soft=[]
+          opener=build_opener(HTTPRedirectHandler())
+          ctx=ssl.create_default_context()
+          for u in sorted(urls):
+              try:
+                  req=Request(u, headers={'User-Agent':'Mozilla/5.0 TNS preproduction link audit'}, method='GET')
+                  with opener.open(req, timeout=15) as r:
+                      code=getattr(r,'status',200)
+                  print('OK', code, u)
+              except HTTPError as e:
+                  if e.code in (404,410):
+                      hard.append((u,e.code))
+                      print('HARD',e.code,u)
+                  else:
+                      soft.append((u,e.code))
+                      print('SOFT',e.code,u)
+              except Exception as e:
+                  soft.append((u,type(e).__name__))
+                  print('SOFT',type(e).__name__,u)
+          print('External URLs:',len(urls),'hard failures:',len(hard),'soft/unverifiable:',len(soft))
+          if hard:
+              sys.exit(1)
+          PY
+
+      - name: Commit image optimization
+        shell: bash
+        run: |
+          git config user.name tnsuhak
+          git config user.email tnsuhak@gmail.com
+          git add images/dorm3.webp images/edusmart-6c471e3b1357.webp
+          git rm .github/workflows/one-time-final-preprod-polish.yml
+          git commit -m 'Finish image optimization before production'
+          git push origin HEAD:seo-aeo-geo-polish-20260830
