@@ -1,5 +1,16 @@
 (function(){
   var panel=document.querySelector('.gnav-panel');
+  var isVideoPage=window.location.pathname.indexOf('student-life-videos.html')!==-1;
+
+  /* 영상 페이지도 다른 서브페이지처럼 현재 페이지명이 상단 메뉴 버튼에 표시되게 통일 */
+  if(isVideoPage){
+    var menu=document.querySelector('.gnav-menu');
+    var summary=menu ? menu.querySelector('summary') : null;
+    if(summary){
+      summary.innerHTML='실제 학생 생활 영상 모음 <span class="caret">▼</span>';
+    }
+  }
+
   if(panel){
     var home=panel.querySelector('a[href="index.html"]');
     if(home && home.innerHTML.indexOf('🗂️')===-1){
@@ -13,12 +24,14 @@
     }
 
     link.classList.add('wide','student-video-link');
-    if(window.location.pathname.indexOf('student-life-videos.html')!==-1){
+    if(isVideoPage){
       link.classList.add('active');
+    }else{
+      link.classList.remove('active');
     }
     link.innerHTML='🎬 실제 학생 생활 영상 모음<small>홈스테이 · 식사 · 학교 적응 · 주말 활동</small>';
 
-    /* 영상 모음은 프로그램 분류와 별도의 콘텐츠이므로 메뉴 맨 아래에 배치 */
+    /* 영상 모음은 프로그램 분류와 별도의 콘텐츠이므로 모든 페이지에서 메뉴 맨 아래에 배치 */
     panel.appendChild(link);
 
     var style=document.createElement('style');
