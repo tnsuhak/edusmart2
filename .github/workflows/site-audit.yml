@@ -1,0 +1,189 @@
+name: Site audit
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - seo-aeo-geo-polish-20260830
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit static site
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          from urllib.parse import urlparse, unquote
+          import json, re, sys, xml.etree.ElementTree as ET
+
+          ROOT = Path('.')
+          PROD = 'https://edusmart-ca.netlify.app'
+          errors = []
+          warnings = []
+
+          html_files = sorted(p for p in ROOT.glob('*.html') if not p.name.startswith(('google', 'naver')))
+          html_names = {p.name for p in html_files}
+          expected_paths = {'/' if p.name == 'index.html' else '/' + p.name for p in html_files}
+          referenced_assets = {}
+
+          class Parser(HTMLParser):
+              def __init__(self):
+                  super().__init__(convert_charrefs=True)
+                  self.refs = []
+                  self.imgs = []
+              def handle_starttag(self, tag, attrs):
+                  d = dict(attrs)
+                  if tag == 'a' and d.get('href'):
+                      self.refs.append(('href', d['href']))
+                  if tag in ('img','script','iframe') and d.get('src'):
+                      self.refs.append(('src', d['src']))
+                  if tag == 'link' and d.get('href'):
+                      self.refs.append(('href', d['href']))
+                  if tag == 'img':
+                      self.imgs.append(d)
+
+          def strip_tags(s):
+              return re.sub(r'<[^>]+>', '', s).strip()
+
+          def local_target(ref, current):
+              ref = unquote(ref.strip())
+              if not ref or ref.startswith(('#','mailto:','tel:','javascript:','data:')):
+                  return None
+              if ref.startswith('//') or re.match(r'^[a-zA-Z][a-zA-Z0-9+.-]*:', ref):
+                  return None
+              path = ref.split('#',1)[0].split('?',1)[0]
+              if not path:
+                  return None
+              if path.startswith('/'):
+                  rel = path.lstrip('/')
+              else:
+                  rel = str((current.parent / path).as_posix())
+              if rel == '':
+                  rel = 'index.html'
+              if rel.endswith('/'):
+                  rel += 'index.html'
+              return Path(rel)
+
+          for p in html_files:
+              s = p.read_text(encoding='utf-8')
+              lower = s.lower()
+
+              if len(re.findall(r'<title\b', s, re.I)) != 1:
+                  errors.append(f'{p}: title tag count != 1')
+              if len(re.findall(r'<meta\s+[^>]*name=["\']description["\']', s, re.I)) != 1:
+                  errors.append(f'{p}: meta description count != 1')
+              if len(re.findall(r'<h1\b', s, re.I)) != 1:
+                  errors.append(f'{p}: H1 count != 1')
+
+              canon = re.findall(r'<link\s+[^>]*rel=["\']canonical["\'][^>]*href=["\']([^"\']+)', s, re.I)
+              if not canon:
+                  canon = re.findall(r'<link\s+[^>]*href=["\']([^"\']+)["\'][^>]*rel=["\']canonical["\']', s, re.I)
+              expected_canon = PROD + ('/' if p.name == 'index.html' else '/' + p.name)
+              if len(canon) != 1:
+                  errors.append(f'{p}: canonical count {len(canon)}')
+              elif canon[0].rstrip('/') != expected_canon.rstrip('/'):
+                  errors.append(f'{p}: canonical {canon[0]} != {expected_canon}')
+
+              for n, block in enumerate(re.findall(r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>', s, re.I|re.S), 1):
+                  try:
+                      json.loads(block)
+                  except Exception as e:
+                      errors.append(f'{p}: invalid JSON-LD block {n}: {e}')
+
+              if re.search(r'edusmart-2\.netlify\.app|deploy-preview-\d+--edusmart', s, re.I):
+                  errors.append(f'{p}: old/preview Netlify domain remains in source')
+
+              for phrase in ('자료 출처','공식 출처','참고 자료','에듀스마트 제공','에듀스마트 공식 소개 영상'):
+                  if phrase in s:
+                      errors.append(f'{p}: forbidden visible source wording remains: {phrase}')
+
+              badges = re.findall(r'class=["\'][^"\']*info-updated[^"\']*["\'][^>]*>(.*?)</', s, re.I|re.S)
+              if not badges:
+                  errors.append(f'{p}: missing info-updated badge')
+              else:
+                  for b in badges:
+                      txt = strip_tags(b)
+                      if not re.fullmatch(r'정보 업데이트\s+\d{4}\.\d{2}\.\d{2}', txt):
+                          errors.append(f'{p}: update badge not date-only: {txt}')
+
+              parser = Parser(); parser.feed(s)
+              for kind, ref in parser.refs:
+                  target = local_target(ref, p)
+                  if target is None:
+                      continue
+                  if not target.exists():
+                      errors.append(f'{p}: broken local {kind} -> {ref}')
+                  elif target.suffix.lower() in ('.jpg','.jpeg','.png','.webp','.avif','.svg'):
+                      referenced_assets.setdefault(target.as_posix(), set()).add(p.name)
+
+              for img in parser.imgs:
+                  src = img.get('src','')
+                  if 'alt' not in img:
+                      warnings.append(f'{p}: image missing alt -> {src}')
+                  target = local_target(src, p)
+                  if target and target.exists() and target.suffix.lower() in ('.jpg','.jpeg','.png','.webp','.avif'):
+                      if 'width' not in img or 'height' not in img:
+                          warnings.append(f'{p}: image missing explicit width/height -> {src}')
+
+          # sitemap
+          sitemap = ROOT / 'sitemap.xml'
+          if not sitemap.exists():
+              errors.append('sitemap.xml missing')
+          else:
+              try:
+                  tree = ET.parse(sitemap)
+                  ns = {'s':'http://www.sitemaps.org/schemas/sitemap/0.9'}
+                  locs = [e.text.strip() for e in tree.findall('.//s:loc', ns) if e.text]
+                  paths = set()
+                  for loc in locs:
+                      u = urlparse(loc)
+                      if u.scheme != 'https' or u.netloc != 'edusmart-ca.netlify.app':
+                          errors.append(f'sitemap wrong domain/url: {loc}')
+                      paths.add(u.path or '/')
+                  missing = sorted(expected_paths - paths)
+                  extra = sorted(paths - expected_paths)
+                  if missing: errors.append(f'sitemap missing pages: {missing}')
+                  if extra: errors.append(f'sitemap has extra pages: {extra}')
+                  if len(locs) != len(set(locs)):
+                      errors.append('sitemap has duplicate loc entries')
+              except Exception as e:
+                  errors.append(f'sitemap XML invalid: {e}')
+
+          robots = (ROOT/'robots.txt')
+          if not robots.exists():
+              errors.append('robots.txt missing')
+          else:
+              r = robots.read_text(encoding='utf-8')
+              if 'User-agent: *' not in r or 'Allow: /' not in r:
+                  errors.append('robots.txt is not explicitly crawlable')
+              if 'Sitemap: https://edusmart-ca.netlify.app/sitemap.xml' not in r:
+                  errors.append('robots.txt sitemap URL mismatch')
+
+          # image payload warnings/errors only for referenced assets
+          for asset, pages in sorted(referenced_assets.items()):
+              size = Path(asset).stat().st_size
+              kb = size / 1024
+              if size > 2*1024*1024:
+                  errors.append(f'oversized referenced image {asset}: {kb:.0f} KB; used by {sorted(pages)}')
+              elif size > 500*1024:
+                  warnings.append(f'large referenced image {asset}: {kb:.0f} KB; used by {sorted(pages)}')
+
+          print(f'HTML pages checked: {len(html_files)}')
+          print(f'Referenced local image assets: {len(referenced_assets)}')
+          print('\nWARNINGS')
+          for w in warnings: print('WARN:', w)
+          print('\nERRORS')
+          for e in errors: print('ERROR:', e)
+          print(f'\nSUMMARY errors={len(errors)} warnings={len(warnings)}')
+          if errors:
+              sys.exit(1)
+          PY
