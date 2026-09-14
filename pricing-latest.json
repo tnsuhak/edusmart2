@@ -1,0 +1,17 @@
+{
+  "source": {
+    "received_date": "2026-09-13",
+    "sender": "Chris Kim <chris@edusmarts.ca>",
+    "subject": "Fwd: 26-27년 에듀스마트 프로그램 최신 비용표 수정본",
+    "attachment": "TalkFile_26~27 에듀스마트 프로그램 비용표 안내 (금액수정).pdf"
+  },
+  "north_vancouver_private": {
+    "program": "St. Thomas Aquinas Regional Secondary School 아카데믹 관리형",
+    "grades": "G9-G11",
+    "duration_months": 10,
+    "previous_cad": 82375,
+    "cad": 85375,
+    "medical_insurance_separate": true,
+    "public_program_cad_for_comparison": 71700
+  }
+}
