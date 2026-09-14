@@ -6,7 +6,7 @@
     if (menu.open && !menu.contains(e.target)) menu.open = false;
   });
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && menu.open) menu.open = false;
+    if (e.key === 'Escape' && menu.open) {menu.open = false; menu.querySelector('summary').focus();}
   });
 })();
 
@@ -344,6 +344,14 @@
       '<div class="finder-cards">' + cards + '</div>' +
       golfHtml +
       '<div class="finder-warning">이 결과는 1차 비교용입니다. 학교 자리, 입학 시기, 영어 수준, 비용 포함·불포함 항목을 확인한 뒤 최종 결정해야 합니다.</div>';
+    var summary = '캐나다 조기유학 상담을 희망합니다.\n' + gradeSelect.options[gradeSelect.selectedIndex].textContent + ' / 예산 ' + budgetLabel + ' / ' + careLabel + '\n검토 프로그램: ' + selected.map(function(p){return p.name;}).join(', ');
+    result.insertAdjacentHTML('beforeend', '<div class="consult-summary"><label for="consult-message">이 조건으로 상담하기</label><textarea id="consult-message" readonly></textarea><div class="consult-actions"><button type="button" id="copy-consult">상담 조건 복사</button><a href="https://open.kakao.com/o/slehLvKi" target="_blank" rel="noopener">카카오톡 상담 열기 ↗</a></div><small id="copy-status" role="status">조건을 복사한 뒤 카카오톡 대화창에 붙여넣어 주세요.</small></div>');
+    document.getElementById('consult-message').value=summary;
+    document.getElementById('copy-consult').addEventListener('click', async function(){
+      var field=document.getElementById('consult-message');
+      try{await navigator.clipboard.writeText(field.value);document.getElementById('copy-status').textContent='복사했습니다. 카카오톡 상담창에 붙여넣어 주세요.';}
+      catch(e){field.focus();field.select();document.getElementById('copy-status').textContent='선택된 내용을 길게 누르거나 Ctrl+C로 복사해 주세요.';}
+    });
     result.scrollIntoView({behavior:'smooth', block:'nearest'});
   });
 })();
