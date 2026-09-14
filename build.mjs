@@ -13,6 +13,10 @@ for(const name of fs.readdirSync('.')){
     .replace(/<footer>[\s\S]*?<\/footer>/,templates.footer);
    text=text.replace(/ aria-current="page"/g,'');
    text=text.replace(/<a ([^>]*href="([^"]+)"[^>]*)>/g,(all,attrs,href)=>href===name?`<a ${attrs} aria-current="page">`:all);
+   if(name==='student-life-videos.html'){
+    text=text.replace(/<a class="video-original"[^>]*>[\s\S]*?<\/a>/g,'')
+     .replace(/<h1>실제 학생들의<br\/><span>생활 영상 보기<\/span><\/h1>/,'<h1>실제 학생 생활<br/><span>영상 모음</span></h1>');
+   }
    fs.writeFileSync(name,text);
    if(preview) text=text.replace(/name="robots" content="index,follow"|content="index,follow" name="robots"/g,'name="robots" content="noindex,nofollow"');
   }
