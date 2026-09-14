@@ -18,7 +18,7 @@ Do not publish volatile meeting numbers without current written confirmation, in
 - Homepage keeps Finder and 13 choices; removes duplicate directory; moves YouTube videos into student-life-videos.html.
 - Four consultation channels and grouped navigation are static HTML generated from templates/*.html by node build.mjs. Edit the templates for shared changes.
 - Finder consultation uses explicit copy/paste; Kakao open-chat does not receive an invented prefilled-message parameter.
-- Instagram covers use honest title/play cards, not unrelated stock thumbnails; no embeds load before selection. Visible `Instagram에서 보기` links are intentionally removed per user preference.
+- Student-life Instagram/YouTube embeds are inserted automatically on page load so visitors see the real embed UI without an extra click; iframe `loading="lazy"` is kept to defer off-screen media. Visible custom `Instagram에서 보기` links remain removed per user preference.
 - Netlify build emits noindex HTML and X-Robots-Tag only for non-production contexts; clean dist on every build to avoid preview headers leaking into production.
 
 ## 2026-09-13 EduSmart revised fee sheet
